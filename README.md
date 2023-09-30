@@ -6,6 +6,7 @@ A state tester using rlviser_py that helps you deal with reward tuning or state 
 ## Features
 - Multiple environment harvesters such as states or rewards that allows you to store a certain amount of these and study whatever you need to
 - Multiple state harvesters such as player position/velocity and ball position/velocity, allowing you to extract a given data in a state
+- Ability to go step by step on harvested states and rewards (forward and backward)
 
 You can create your own harvesters, it should work (i said "should").
 
