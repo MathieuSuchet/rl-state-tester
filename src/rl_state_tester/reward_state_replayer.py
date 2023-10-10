@@ -8,9 +8,9 @@ from rlgym_sim.gym import Gym
 from rlgym_sim.utils.gamestates import GameState
 from stable_baselines3 import PPO
 
-from global_harvesters.global_harvesters import StateHarvester, RewardHarvester
-from rewards import SplitCombinedReward
-from standalone_runner import StandaloneRunner
+from rl_state_tester.utils.rewards.common_rewards import SplitCombinedReward
+from rl_state_tester.global_harvesters.global_harvesters import StateHarvester, RewardHarvester
+from rl_state_tester.global_harvesters.standalone_runner import StandaloneRunner
 
 
 class RewardStateReplayer(StandaloneRunner):
@@ -77,10 +77,11 @@ class RewardStateReplayer(StandaloneRunner):
     def _print_rewards(self, state: GameState, rewards):
         for i in range(len(state.players)):
             print(f"Player {i}:")
-            for j, legend in enumerate(self.legends):
-                step = self.combined_reward.steps[i][self.nb_episodes][self.current_state_index] if self.combined_reward.steps[i] is not None else None
-                print(f"\t{legend: <{self.max_len}} : {float(rewards[i][j]):3f} "
-                      f"{((step.value if step.value < 0 else ('+' + step.value)) + ':' + step.reason if isinstance(self.combined_reward.steps[i], list) else 'Nothing') if step else ''}")
+
+            # for j, legend in enumerate(self.legends):
+            #     step = self.combined_reward.steps[i][self.nb_episodes][self.current_state_index] if self.combined_reward.steps[i] is not None else None
+            #     print(f"\t{legend: <{self.max_len}} : {float(rewards[i][j]):3f} "
+            #           f"{((step.value if step.value < 0 else ('+' + step.value)) + ':' + step.reason if isinstance(self.combined_reward.steps[i], list) else 'Nothing') if step else ''}")
 
     def _step_forward(self, states, rewards):
 

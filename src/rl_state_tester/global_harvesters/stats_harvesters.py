@@ -9,7 +9,7 @@ from rlgym_sim.utils.common_values import BACK_WALL_Y, SIDE_WALL_X, CEILING_Z
 from rlgym_sim.utils.gamestates import GameState
 from stable_baselines3 import PPO
 
-from standalone_runner import StandaloneRunner
+from rl_state_tester.global_harvesters.standalone_runner import StandaloneRunner
 
 CORNERS = np.array([
     np.array([-SIDE_WALL_X, BACK_WALL_Y, 0]),

@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import List, Union, Dict
 
 import numpy as np
-from rlgym_sim.utils.gamestates import GameState
 
 
 class Callback(ABC):

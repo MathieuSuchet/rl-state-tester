@@ -4,7 +4,7 @@ import numpy as np
 from rlgym_sim.gym import Gym
 from stable_baselines3 import PPO
 
-from standalone_runner import StandaloneRunner
+from rl_state_tester.global_harvesters.standalone_runner import StandaloneRunner
 
 
 class RewardHarvester(StandaloneRunner):

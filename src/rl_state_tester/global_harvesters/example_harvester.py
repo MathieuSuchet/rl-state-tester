@@ -4,8 +4,8 @@ import numpy as np
 from rlgym_sim.gym import Gym
 from stable_baselines3 import PPO
 
-from global_harvesters.global_harvesters import RewardHarvester, StateHarvester
-from standalone_runner import StandaloneRunner
+from rl_state_tester.global_harvesters.global_harvesters import RewardHarvester, StateHarvester
+from rl_state_tester.global_harvesters.standalone_runner import StandaloneRunner
 
 
 class MyExampleHarvester(StandaloneRunner):
