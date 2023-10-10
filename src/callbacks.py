@@ -15,11 +15,13 @@ class Callback(ABC):
         self._on_reset(obs, info, args, kwargs)
 
     @abstractmethod
-    def _on_step(self, obs: np.array, reward: List[Union[float, int]], terminal: Union[List[bool], bool], info: Dict[str, object], *args, **kwargs):
+    def _on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]], terminal: Union[List[bool], bool],
+                 info: Dict[str, object], *args, **kwargs):
         pass
 
-    def on_step(self, obs: np.array, reward: List[Union[float, int]], terminal: Union[List[bool], bool], info: Dict[str, object], *args, **kwargs):
-        self._on_step(obs, reward, terminal, info, args, kwargs)
+    def on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]], terminal: Union[List[bool], bool],
+                info: Dict[str, object], *args, **kwargs):
+        self._on_step(obs, action, reward, terminal, info, args, kwargs)
 
     @abstractmethod
     def _on_close(self, *args, **kwargs):
@@ -37,10 +39,10 @@ class MultiCallback(Callback):
         for callback in self.callbacks:
             callback.on_reset(obs, info, args, kwargs)
 
-    def _on_step(self, obs: np.array, reward: List[Union[float, int]], terminal: Union[List[bool], bool], info: Dict[str, object],
-                 *args, **kwargs):
+    def _on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]], terminal: Union[List[bool], bool],
+                 info: Dict[str, object], *args, **kwargs):
         for callback in self.callbacks:
-            callback.on_step(obs, reward, terminal, info, args, kwargs)
+            callback.on_step(obs, action, reward, terminal, info, args, kwargs)
 
     def _on_close(self, *args, **kwargs):
         for callback in self.callbacks:

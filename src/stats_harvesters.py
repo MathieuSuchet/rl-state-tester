@@ -9,7 +9,7 @@ from rlgym_sim.utils.common_values import BACK_WALL_Y, SIDE_WALL_X, CEILING_Z
 from rlgym_sim.utils.gamestates import GameState
 from stable_baselines3 import PPO
 
-from standalone_runner import StandaloneRunner, MultiStandaloneRunner
+from standalone_runner import StandaloneRunner
 
 CORNERS = np.array([
     np.array([-SIDE_WALL_X, BACK_WALL_Y, 0]),
@@ -75,7 +75,8 @@ class StatHarvester(StandaloneRunner, ABC):
         self.data = []
         self.n_episodes = -1
 
-    def _on_step(self, obs: np.array, reward: List[Union[float, int]], terminal: Union[List[bool], bool], info: Dict[str, object], *args, **kwargs):
+    def _on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]], terminal: Union[List[bool], bool],
+                 info: Dict[str, object], *args, **kwargs):
         state: GameState = info["state"]
         self.data.append(np.array(self._get_data(state)))
 
@@ -94,20 +95,36 @@ class StatHarvester(StandaloneRunner, ABC):
         pass
 
 
-class MultiStatHarvester(MultiStandaloneRunner):
+class MultiStatHarvester(StatHarvester):
+    def _get_data(self, state: GameState):
+        pass
+
     def __init__(self, env: Gym, agent: PPO, rendered: bool, deterministic: bool, harvesters: List[StatHarvester]):
-        super().__init__(env, agent, rendered, deterministic, harvesters)
+        super().__init__(env, agent, rendered, deterministic)
+
+        self.harvesters = harvesters
+
+    def _on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]], terminal: Union[List[bool], bool],
+                 info: Dict[str, object], *args, **kwargs):
+        for harvester in self.harvesters:
+            harvester.on_step(obs, action, reward, terminal, info, args, kwargs)
+
+    def _on_reset(self, obs: np.array, info: Dict[str, object], *args, **kwargs):
+        for harvester in self.harvesters:
+            harvester.on_reset(obs, info, args, kwargs)
 
     def _on_close(self, *args, **kwargs):
-        super()._on_close(args, kwargs)
+        for harvester in self.harvesters:
+            harvester.on_close(args, kwargs)
+
         self.customize_plot()
 
-    def customize_plot(self):
-        n_harvesters = len(self.callbacks)
+    def customize_plot(self, **kwargs):
+        n_harvesters = len(self.harvesters)
 
         plt.style.use("dark_background")
         fig = plt.figure()
-        for i, harvester in enumerate(self.callbacks):
+        for i, harvester in enumerate(self.harvesters):
             print(100 + 10 * n_harvesters + (i + 1))
             ax = fig.add_subplot(100 + 10 * n_harvesters + (i + 1), projection="3d")
             harvester.customize_plot(ax)
