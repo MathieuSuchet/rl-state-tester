@@ -1,45 +1,38 @@
-from typing import List, Optional
+from typing import Optional
 
-from rlgym_sim.envs import Match
-from rlgym_sim.utils.action_parsers import DefaultAction
-from rlgym_sim.utils.obs_builders import DefaultObs
-from rlgym_sim.utils.reward_functions import DefaultReward
-from rlgym_sim.utils.state_setters import DefaultState
-from rlgym_sim.utils.terminal_conditions import common_conditions
+from rlgym.api import StateMutator, ActionParser, AgentID, ActionType, EngineActionType, StateType, SpaceType, \
+    ObsBuilder, ObsType, DoneCondition, RewardFunction, RewardType, TransitionEngine, Renderer
+from rlgym.rocket_league.action_parsers import LookupTableAction
+from rlgym.rocket_league.done_conditions import NoTouchTimeoutCondition
+from rlgym.rocket_league.obs_builders import DefaultObs
+from rlgym.rocket_league.reward_functions import CombinedReward
+from rlgym.rocket_league.sim import RLViserRenderer, RocketSimEngine
+from rlgym.rocket_league.state_mutators import KickoffMutator, MutatorSequence, FixedTeamSizeMutator
+from rlgym_ppo.util import RLGymV2GymWrapper
 
 from rl_state_tester.global_harvesters.callbacks import Callback
 from rl_state_tester.utils.envs import HarvestableEnv
 
 
-def make(tick_skip: int = 8,
-         spawn_opponents: bool = False,
-         team_size: int = 1,
-         gravity: float = 1,
-         boost_consumption: float = 1,
-         copy_gamestate_every_step = True,
-         dodge_deadzone = 0.8,
-         terminal_conditions: List[object] = (common_conditions.TimeoutCondition(225), common_conditions.GoalScoredCondition()),
-         reward_fn: object = DefaultReward(),
-         obs_builder: object = DefaultObs(),
-         action_parser: object = DefaultAction(),
-         state_setter: object = DefaultState(),
-         harvester: Optional[Callback] = None):
-    match = Match(
+def make(
+        termination_cond: DoneCondition[AgentID, StateType] = NoTouchTimeoutCondition(timeout=500),
+        truncation_cond: DoneCondition[AgentID, StateType] = NoTouchTimeoutCondition(timeout=500),
+        reward_fn: RewardFunction[AgentID, StateType, RewardType] = CombinedReward(),
+        obs_builder: ObsBuilder[AgentID, ObsType, StateType, SpaceType] = DefaultObs(),
+        action_parser: ActionParser[AgentID, ActionType, EngineActionType, StateType, SpaceType] = LookupTableAction(),
+        state_setter: StateMutator[StateType] = MutatorSequence(FixedTeamSizeMutator(blue_size=3,
+                                                                                     orange_size=3), KickoffMutator()),
+        transition_engine: TransitionEngine[AgentID, StateType, EngineActionType] = RocketSimEngine(),
+        renderer: Optional[Renderer[StateType]] = RLViserRenderer(),
+        harvester: Optional[Callback] = None):
+    return RLGymV2GymWrapper(HarvestableEnv(
         obs_builder=obs_builder,
         action_parser=action_parser,
-        state_setter=state_setter,
-        reward_function=reward_fn,
-        terminal_conditions=terminal_conditions,
-        spawn_opponents=spawn_opponents,
-        team_size=team_size
-    )
-
-    return HarvestableEnv(
-        match=match,
-        copy_gamestate_every_step=copy_gamestate_every_step,
-        dodge_deadzone=dodge_deadzone,
-        tick_skip=tick_skip,
-        boost_consumption=boost_consumption,
-        gravity=gravity,
-        harvester=harvester
-    )
+        state_mutator=state_setter,
+        reward_fn=reward_fn,
+        termination_cond=termination_cond,
+        harvester=harvester,
+        renderer=renderer,
+        transition_engine=transition_engine,
+        truncation_cond=truncation_cond,
+    ))

@@ -1,35 +1,21 @@
-from typing import Tuple, Optional
+from typing import Tuple, Union, List, Dict, Any
 
-import numpy as np
-from rlgym_sim.utils import RewardFunction
-from rlgym_sim.utils.gamestates import PlayerData, GameState
-from rlgym_sim.utils.reward_functions import CombinedReward
+from rlgym.api import RewardFunction, AgentID
+from rlgym.rocket_league.api import GameState
+from rlgym.rocket_league.reward_functions import CombinedReward
 
 
 class SplitCombinedReward(CombinedReward):
-    def __init__(
-            self,
-            reward_functions: Tuple[RewardFunction, ...],
-            reward_weights: Optional[Tuple[float, ...]] = None
-    ):
-        super().__init__(reward_functions, reward_weights)
+    def __init__(self, *rewards_and_weights: Union[RewardFunction, Tuple[RewardFunction, float]]):
+        super().__init__(*rewards_and_weights)
 
-    def get_reward(
-            self,
-            player: PlayerData,
-            state: GameState,
-            previous_action: np.ndarray
-    ):
-        return [
-            r.get_reward(player, state, previous_action) * float(w) for r, w in zip(self.reward_functions, self.reward_weights)
-        ]
+    def get_rewards(self, agents: List[AgentID], state: GameState, is_terminated: Dict[AgentID, bool],
+                    is_truncated: Dict[AgentID, bool], shared_info: Dict[str, Any]) -> Dict[AgentID, float]:
 
-    def get_final_reward(
-            self,
-            player: PlayerData,
-            state: GameState,
-            previous_action: np.ndarray
-    ):
-        return [
-            r.get_final_reward(player, state, previous_action) * float(w) for r, w in zip(self.reward_functions, self.reward_weights)
-        ]
+        combined_rewards = {agent: [] for agent in agents}
+        for reward_fn, weight in zip(self.reward_fns, self.weights):
+            rewards = reward_fn.get_rewards(agents, state, is_terminated, is_truncated, shared_info)
+            for agent, reward in rewards.items():
+                combined_rewards[agent].append(reward * weight)
+
+        return combined_rewards

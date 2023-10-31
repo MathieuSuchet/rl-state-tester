@@ -1,55 +1,53 @@
 import numpy as np
-from rlgym_sim.utils.action_parsers import DiscreteAction
-from rlgym_sim.utils.obs_builders import AdvancedObs
-from rlgym_sim.utils.reward_functions.common_rewards import EventReward, ConstantReward, VelocityReward, \
-    VelocityBallToGoalReward
-from rlgym_sim.utils.state_setters import DefaultState
-from rlgym_sim.utils.terminal_conditions.common_conditions import TimeoutCondition
-from stable_baselines3 import PPO
-from stable_baselines3.ppo import MlpPolicy
+from rlgym.rocket_league.reward_functions.goal_reward import GoalReward
+from rlgym.rocket_league.reward_functions.touch_reward import TouchReward
+from rlgym_ppo import Learner
 
+from reward_state_replayer import RewardStateReplayer
 from rl_state_tester.make import make
-from rl_state_tester.reward_state_replayer import RewardStateReplayer
 from rl_state_tester.utils.rewards.common_rewards import SplitCombinedReward
 
-reward_function = (
-        EventReward(team_goal=120, goal=100, concede=-150, save=50, shot=60, demo=60),
-        ConstantReward(),
-        VelocityReward(),
-        VelocityBallToGoalReward()
-    )
-
-rewards_weight = (1, 15, 1, 8)
-
 cb = SplitCombinedReward(
-        reward_functions=reward_function,
-        reward_weights=rewards_weight
+        (GoalReward(), 1),
+        (TouchReward(), 15)
     )
 
-env = make(
-    tick_skip=8,
-    reward_fn=cb,
-    state_setter=DefaultState(),
-    gravity=1,
-    team_size=3,
-    dodge_deadzone=0.8,
-    boost_consumption=1,
-    obs_builder=AdvancedObs(),
-    action_parser=DiscreteAction(),
-    spawn_opponents=True,
-    terminal_conditions=[TimeoutCondition(500)],
-    harvester=RewardStateReplayer(cb)
-)
+def create_env():
+    return make(reward_fn=cb, renderer=None, harvester=RewardStateReplayer(rendered=False, combined_reward=cb))
 
-agent = PPO(policy=MlpPolicy, env=env)
+if __name__ == "__main__":
 
-obs = env.reset()
-for i in range(500):
-    actions, _ = agent.predict(obs)
+    env = create_env()
 
-    obs, reward, terminal, info = env.step(actions)
+    agent = Learner(
+        env_create_function=create_env,
+        ppo_batch_size=100,
+        ppo_minibatch_size=10,
 
-    if terminal:
-        obs = env.reset()
+        timestep_limit=100,
+        ts_per_iteration=100,
 
-env.close()
+        exp_buffer_size=100,
+        device="cpu",
+        gae_lambda=0.99,
+        n_proc=1,
+        critic_lr=1e-5,
+        policy_lr=1e-5,
+
+        critic_layer_sizes=(256, 256, 256),
+        policy_layer_sizes=(256, 256, 256),
+        load_wandb=False,
+    )
+
+    obs = env.reset()
+    for i in range(100):
+        actions, _ = agent.agent.policy.get_action(obs)
+        actions = actions.numpy().astype(np.float32)
+        actions = actions.reshape((*actions.shape, 1))
+        obs, reward, terminated, truncated, _ = env.step(actions)
+
+        if terminated or truncated:
+            obs = env.reset()
+
+    env.close()
+

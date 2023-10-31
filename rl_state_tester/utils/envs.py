@@ -1,30 +1,37 @@
-from typing import Tuple, List, Union, Any, Dict
+from typing import Tuple, Dict, Optional
 
-from rlgym_sim.gym import Gym
+from rlgym.api import RLGym, AgentID, ObsType, ActionType, RewardType, StateType, Renderer, TransitionEngine, \
+    DoneCondition, RewardFunction, ActionParser, ObsBuilder, StateMutator, EngineActionType, SpaceType
 
 from rl_state_tester.global_harvesters.callbacks import Callback
 
 
-class HarvestableEnv(Gym):
-    def __init__(self, match, copy_gamestate_every_step, dodge_deadzone, tick_skip, gravity, boost_consumption, harvester: Callback):
-        super().__init__(match, copy_gamestate_every_step, dodge_deadzone, tick_skip, gravity, boost_consumption)
+class HarvestableEnv(RLGym):
+    def __init__(self,
+                 state_mutator: StateMutator[StateType],
+                 obs_builder: ObsBuilder[AgentID, ObsType, StateType, SpaceType],
+                 action_parser: ActionParser[AgentID, ActionType, EngineActionType, StateType, SpaceType],
+                 reward_fn: RewardFunction[AgentID, StateType, RewardType],
+                 termination_cond: DoneCondition[AgentID, StateType],
+                 truncation_cond: DoneCondition[AgentID, StateType],
+                 transition_engine: TransitionEngine[AgentID, StateType, EngineActionType],
+                 renderer: Optional[Renderer[StateType]],
+                 harvester: Callback):
+        super().__init__(state_mutator, obs_builder, action_parser, reward_fn, termination_cond, truncation_cond,
+                         transition_engine, renderer)
         self.harvester = harvester
 
-    def reset(self, return_info=False) -> Union[List, Tuple]:
-        obs, info = super().reset(True)
-        self.harvester.on_reset(obs, info)
+    def reset(self) -> Dict[AgentID, ObsType]:
+        args = super().reset()
+        self.harvester.on_reset(args, self.state)
+        return args
 
-        if return_info:
-            return obs, info
-        return obs
+    def step(self, actions: Dict[AgentID, ActionType]) -> Tuple[
+        Dict[AgentID, ObsType], Dict[AgentID, RewardType], Dict[AgentID, bool], Dict[AgentID, bool]]:
+        obs, rewards, terminated, truncated = super().step(actions)
+        self.harvester.on_step(obs, actions, rewards, terminated, truncated, self.state)
+        return obs, rewards, terminated, truncated
 
-    def step(self, actions: Any) -> Tuple[List, List, bool, Dict]:
-        obs, reward, terminal, info = super().step(actions)
-
-        self.harvester.on_step(obs, actions, reward, terminal, info)
-
-        return obs, reward, terminal, info
-
-    def close(self):
+    def close(self) -> None:
         super().close()
         self.harvester.on_close()
