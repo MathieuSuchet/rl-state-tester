@@ -8,40 +8,34 @@ from rlgym_sim.gym import Gym
 from rlgym_sim.utils.gamestates import GameState
 from stable_baselines3 import PPO
 
+from rl_state_tester.global_harvesters.callbacks import Callback
 from rl_state_tester.utils.rewards.common_rewards import SplitCombinedReward
 from rl_state_tester.global_harvesters.global_harvesters import StateHarvester, RewardHarvester
-from rl_state_tester.global_harvesters.standalone_runner import StandaloneRunner
 
 
-class RewardStateReplayer(StandaloneRunner):
+class RewardStateReplayer(Callback):
 
     def __init__(
             self,
-            env: Gym,
-            agent: PPO,
-            rendered: bool,
-            deterministic: bool,
             combined_reward: SplitCombinedReward,
-            reward_legends: List[str],
             state_harvester: Optional[StateHarvester] = None,
             reward_harvester: Optional[RewardHarvester] = None,
 
     ):
-        super().__init__(env, agent, rendered, deterministic)
         self.state_harvester = state_harvester
         self.reward_harvester = reward_harvester
         self.current_state_index = 0
         self.nb_episodes = 0
-        self.legends = reward_legends
+        self.legends = [r.__class__.__name__ for r in combined_reward.reward_functions]
         self.max_len = max([len(name) for name in self.legends])
         self.playing = False
         self.combined_reward = combined_reward
 
         if not self.state_harvester:
-            self.state_harvester = StateHarvester(env, agent, rendered, deterministic)
+            self.state_harvester = StateHarvester()
 
         if not self.reward_harvester:
-            self.reward_harvester = RewardHarvester(env, agent, rendered, deterministic)
+            self.reward_harvester = RewardHarvester()
 
 
     def _on_reset(self, obs: np.array, info: Dict[str, object], *args, **kwargs):
@@ -65,7 +59,7 @@ class RewardStateReplayer(StandaloneRunner):
         self.current_state_index = 0
         self.nb_episodes = 0
 
-        rlviser_py.render_rlgym(states[self.nb_episodes][self.current_state_index])
+        # rlviser_py.render_rlgym(states[self.nb_episodes][self.current_state_index])
 
         keyboard.on_press_key("right arrow", lambda e: self._step_forward(states, rewards))
         keyboard.on_press_key("left arrow", lambda e: self._step_backward(states, rewards))
@@ -78,7 +72,8 @@ class RewardStateReplayer(StandaloneRunner):
         for i in range(len(state.players)):
             print(f"Player {i}:")
 
-            # for j, legend in enumerate(self.legends):
+            for j, legend in enumerate(self.legends):
+                print("\t", legend, ":", rewards[i][j])
             #     step = self.combined_reward.steps[i][self.nb_episodes][self.current_state_index] if self.combined_reward.steps[i] is not None else None
             #     print(f"\t{legend: <{self.max_len}} : {float(rewards[i][j]):3f} "
             #           f"{((step.value if step.value < 0 else ('+' + step.value)) + ':' + step.reason if isinstance(self.combined_reward.steps[i], list) else 'Nothing') if step else ''}")
@@ -98,7 +93,7 @@ class RewardStateReplayer(StandaloneRunner):
             self.current_state_index = 0
             print("Resetting to first state of next episode")
 
-        rlviser_py.render_rlgym(states[self.nb_episodes][self.current_state_index])
+        # rlviser_py.render_rlgym(states[self.nb_episodes][self.current_state_index])
         os.system("cls")
         self._print_rewards(
             states[self.nb_episodes][self.current_state_index],
@@ -117,7 +112,7 @@ class RewardStateReplayer(StandaloneRunner):
             self.current_state_index = states[self.nb_episodes].shape[0] - 1
             print("Resetting to first state of next episode")
 
-        rlviser_py.render_rlgym(states[self.nb_episodes][self.current_state_index])
+        # rlviser_py.render_rlgym(states[self.nb_episodes][self.current_state_index])
         os.system("cls")
         self._print_rewards(states[self.nb_episodes][self.current_state_index], rewards[self.nb_episodes][self.current_state_index])
 

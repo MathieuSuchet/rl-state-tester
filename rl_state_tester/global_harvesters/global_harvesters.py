@@ -4,18 +4,14 @@ import numpy as np
 from rlgym_sim.gym import Gym
 from stable_baselines3 import PPO
 
+from rl_state_tester.global_harvesters.callbacks import Callback
 from rl_state_tester.global_harvesters.standalone_runner import StandaloneRunner
 
 
-class RewardHarvester(StandaloneRunner):
+class RewardHarvester(Callback):
     def __init__(
-            self,
-            env: Optional[Gym] = None,
-            agent: Optional[PPO] = None,
-            rendered: bool = False,
-            deterministic: bool = True
+            self
     ):
-        super().__init__(env, agent, rendered, deterministic)
 
         # All episodes shape   : [n_episodes, ?, n_players, 1] (Can't treat all episodes at once on axis 0 and 2 ?)
         # Episode Reward shape : [n_steps_in_ep, n_players, 1]
@@ -42,10 +38,8 @@ class RewardHarvester(StandaloneRunner):
         pass
 
 
-class StateHarvester(StandaloneRunner):
-    def __init__(self, env: Optional[Gym] = None, agent: Optional[PPO] = None, rendered: bool = False,
-                 deterministic: bool = True):
-        super().__init__(env, agent, rendered, deterministic)
+class StateHarvester(Callback):
+    def __init__(self):
         self._all_episodes = [[]]
         self._nb_episodes = -1
 
@@ -73,9 +67,8 @@ class StateHarvester(StandaloneRunner):
         self._all_episodes.append([])
 
 
-class ActionHarvester(StandaloneRunner):
-    def __init__(self, env: Optional[Gym] = None, agent: Optional[PPO] = None, rendered: bool = False, deterministic: bool = True):
-        super().__init__(env, agent, rendered, deterministic)
+class ActionHarvester(Callback):
+    def __init__(self):
         self.actions = []
         self.n_episodes = -1
 
