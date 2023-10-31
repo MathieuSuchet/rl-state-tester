@@ -85,8 +85,6 @@ class RewardStateReplayer(Callback):
             #           f"{((step.value if step.value < 0 else ('+' + step.value)) + ':' + step.reason if isinstance(self.combined_reward.steps[i], list) else 'Nothing') if step else ''}")
 
     def _step_forward(self, states, rewards):
-        print("Forward")
-
         self.current_state_index += 1
         # Reset
         if states[self.nb_episodes].shape[0] <= self.current_state_index:
