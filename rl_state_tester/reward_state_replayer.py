@@ -3,14 +3,12 @@ from typing import List, Union, Dict, Optional
 
 import keyboard
 import numpy as np
-import rlviser_py
-from rlgym_sim.gym import Gym
 from rlgym_sim.utils.gamestates import GameState
-from stable_baselines3 import PPO
+from rlviser_py import rlviser_py
 
 from rl_state_tester.global_harvesters.callbacks import Callback
-from rl_state_tester.utils.rewards.common_rewards import SplitCombinedReward
 from rl_state_tester.global_harvesters.global_harvesters import StateHarvester, RewardHarvester
+from rl_state_tester.utils.rewards.common_rewards import SplitCombinedReward
 
 
 class RewardStateReplayer(Callback):
@@ -59,7 +57,7 @@ class RewardStateReplayer(Callback):
         self.current_state_index = 0
         self.nb_episodes = 0
 
-        # rlviser_py.render_rlgym(states[self.nb_episodes][self.current_state_index])
+        rlviser_py.render_rlgym(gym_state=states[self.nb_episodes][self.current_state_index], tick_rate=1/120, tick_count=0)
 
         keyboard.on_press_key("right arrow", lambda e: self._step_forward(states, rewards))
         keyboard.on_press_key("left arrow", lambda e: self._step_backward(states, rewards))
@@ -93,7 +91,7 @@ class RewardStateReplayer(Callback):
             self.current_state_index = 0
             print("Resetting to first state of next episode")
 
-        # rlviser_py.render_rlgym(states[self.nb_episodes][self.current_state_index])
+        rlviser_py.render_rlgym(gym_state=states[self.nb_episodes][self.current_state_index], tick_rate=1/120)
         os.system("cls")
         self._print_rewards(
             states[self.nb_episodes][self.current_state_index],
@@ -112,7 +110,7 @@ class RewardStateReplayer(Callback):
             self.current_state_index = states[self.nb_episodes].shape[0] - 1
             print("Resetting to first state of next episode")
 
-        # rlviser_py.render_rlgym(states[self.nb_episodes][self.current_state_index])
+        rlviser_py.render_rlgym(gym_state=states[self.nb_episodes][self.current_state_index], tick_rate=1/120)
         os.system("cls")
         self._print_rewards(states[self.nb_episodes][self.current_state_index], rewards[self.nb_episodes][self.current_state_index])
 

@@ -5,6 +5,11 @@ import numpy as np
 
 
 class Callback(ABC):
+    def _on_pre_step(self, actions: np.array):
+        return actions
+
+    def on_pre_step(self, actions: np.array):
+        return self._on_pre_step(actions)
 
     @abstractmethod
     def _on_reset(self, obs: np.array, info: Dict[str, object], *args, **kwargs):
@@ -14,11 +19,13 @@ class Callback(ABC):
         self._on_reset(obs, info, args, kwargs)
 
     @abstractmethod
-    def _on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]], terminal: Union[List[bool], bool],
+    def _on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]],
+                 terminal: Union[List[bool], bool],
                  info: Dict[str, object], *args, **kwargs):
         pass
 
-    def on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]], terminal: Union[List[bool], bool],
+    def on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]],
+                terminal: Union[List[bool], bool],
                 info: Dict[str, object], *args, **kwargs):
         self._on_step(obs, action, reward, terminal, info, args, kwargs)
 
@@ -38,7 +45,8 @@ class MultiCallback(Callback):
         for callback in self.callbacks:
             callback.on_reset(obs, info, args, kwargs)
 
-    def _on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]], terminal: Union[List[bool], bool],
+    def _on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]],
+                 terminal: Union[List[bool], bool],
                  info: Dict[str, object], *args, **kwargs):
         for callback in self.callbacks:
             callback.on_step(obs, action, reward, terminal, info, args, kwargs)
