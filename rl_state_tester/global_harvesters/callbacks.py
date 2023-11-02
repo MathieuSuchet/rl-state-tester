@@ -41,6 +41,11 @@ class MultiCallback(Callback):
     def __init__(self, callbacks: List[Callback]):
         self.callbacks = callbacks
 
+    def _on_pre_step(self, actions: np.array):
+        for callback in self.callbacks:
+            actions = callback.on_pre_step(actions)
+        return actions
+
     def _on_reset(self, obs: np.array, info: Dict[str, object], *args, **kwargs):
         for callback in self.callbacks:
             callback.on_reset(obs, info, args, kwargs)
