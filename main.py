@@ -1,5 +1,6 @@
 import os
 
+from rlgym.gamelaunch import LaunchPreference
 from rlgym_sim.utils.action_parsers import ContinuousAction
 from rlgym_sim.utils.obs_builders import AdvancedObs
 from rlgym_sim.utils.terminal_conditions.common_conditions import GoalScoredCondition, TimeoutCondition
@@ -13,7 +14,7 @@ import states
 from rl_state_tester.global_harvesters.callbacks import MultiCallback
 from rl_state_tester.hot_reload.hot_reload import HotReload, HotReloadConfig
 from rl_state_tester.live_testing.live_playing import LivePlaying
-from rl_state_tester.make import make_sim
+from rl_state_tester.make import make_sim, make_rl
 from rl_state_tester.utils.rewards.reward_logger import RewardLogger
 
 cb = reward_config.reward_function
@@ -34,11 +35,13 @@ def state_action():
     print("Hot reload done")
 
 
-env = make_sim(
+env = make_rl(
     tick_skip=1,
+    agent_tick_skip=8,
     reward_fn=cb,
     state_setter=state_config.state_setter,
     team_size=3,
+    launch_preference=LaunchPreference.STEAM,
     obs_builder=AdvancedObs(),
     action_parser=ContinuousAction(),
     spawn_opponents=True,

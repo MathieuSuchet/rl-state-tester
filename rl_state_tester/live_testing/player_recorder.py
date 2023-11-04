@@ -46,6 +46,7 @@ class PlayerAgent:
         roll_button = self.stick.get_button(2)
         if roll_button or jump:
             roll = steer
+            yaw = 0
 
         return [throttle, steer, pitch, yaw, roll, jump, boost, handbrake]
 

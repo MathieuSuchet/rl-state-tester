@@ -133,7 +133,7 @@ class HarvestableEnvRL(GymRL):
         return obs
 
     def step(self, actions: Any) -> Tuple[List, List, bool, Dict]:
-        actions[0] = self.harvester.on_pre_step(actions)
+        actions = self.harvester.on_pre_step(actions)
         self.current_tick += self.tick_skip
 
         if self.current_tick < self.agent_tick_skip:
