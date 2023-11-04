@@ -133,7 +133,6 @@ class HarvestableEnvRL(GymRL):
         return obs
 
     def step(self, actions: Any) -> Tuple[List, List, bool, Dict]:
-        actions = self.harvester.on_pre_step(actions)
         self.current_tick += self.tick_skip
 
         if self.current_tick < self.agent_tick_skip:
@@ -141,11 +140,43 @@ class HarvestableEnvRL(GymRL):
                 actions[i] = np.zeros((1, 8))
 
         self.current_tick %= self.agent_tick_skip
-        obs, reward, terminal, info = super().step(actions)
+        """
+                The step function will send the list of provided actions to the game, then advance the game forward by `tick_skip`
+                physics ticks using that action. The game is then paused, and the current state is sent back to RLGym. This is
+                decoded into a `GameState` object, which gets passed to the configuration objects to determine the rewards,
+                next observation, and done signal.
 
-        self.harvester.on_step(obs, actions, reward, terminal, info)
+                :param actions: An object containing actions, in the format specified by the `ActionParser`.
+                :return: A tuple containing (obs, rewards, done, info)
+                """
 
-        return obs, reward, terminal, info
+        actions = self._match.parse_actions(actions, self._prev_state)
+        actions = self.harvester.on_pre_step(actions)
+        actions_sent = self._send_actions(actions)
+
+        received_state = self._receive_state()
+
+        # If, for any reason, the state is not successfully received, we do not want to just crash the API.
+        # This will simply pretend that the state did not change and advance as though nothing went wrong.
+        if received_state is None:
+            print("FAILED TO RECEIEVE STATE! FALLING TO", self._prev_state)
+            state = self._prev_state
+        else:
+            state = received_state
+
+        obs = self._match.build_observations(state)
+        done = self._match.is_done(state) or received_state is None or not actions_sent
+        reward = self._match.get_rewards(state, done)
+        self._prev_state = state
+
+        info = {
+            'state': state,
+            'result': self._match.get_result(state)
+        }
+
+        self.harvester.on_step(obs, actions, reward, done, info)
+
+        return obs, reward, done, info
 
     def close(self):
         super().close()

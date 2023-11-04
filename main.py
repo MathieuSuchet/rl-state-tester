@@ -1,7 +1,7 @@
 import os
 
 from rlgym.gamelaunch import LaunchPreference
-from rlgym_sim.utils.action_parsers import ContinuousAction
+from rlgym_sim.utils.action_parsers import ContinuousAction, DiscreteAction
 from rlgym_sim.utils.obs_builders import AdvancedObs
 from rlgym_sim.utils.terminal_conditions.common_conditions import GoalScoredCondition, TimeoutCondition
 from stable_baselines3 import PPO
@@ -43,9 +43,9 @@ env = make_rl(
     team_size=3,
     launch_preference=LaunchPreference.STEAM,
     obs_builder=AdvancedObs(),
-    action_parser=ContinuousAction(),
+    action_parser=DiscreteAction(),
     spawn_opponents=True,
-    terminal_conditions=[GoalScoredCondition(), TimeoutCondition(500)],
+    terminal_conditions=[GoalScoredCondition()],
     harvester=MultiCallback(
         callbacks=[
             # Allow you to play as agent 0

@@ -32,6 +32,11 @@ class HotReloadConfig:
         )
         return updated
 
+    def reload(self):
+        importlib.reload(self.script_module)
+        importlib.reload(self.config_module)
+
+
 
 class HotReload(Callback):
     def __init__(self, targets: Tuple[HotReloadConfig, ...]):
@@ -41,8 +46,7 @@ class HotReload(Callback):
         for i, target in enumerate(self.targets):
             if target.update():
                 try:
-                    importlib.reload(target.script_module)
-                    importlib.reload(target.config_module)
+                    target.reload()
                     target.action()
                 except Exception as e:
                     print("Problem during hot reload:", e)
