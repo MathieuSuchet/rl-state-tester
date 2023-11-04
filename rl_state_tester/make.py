@@ -50,7 +50,6 @@ def make_sim(tick_skip: int = 8,
 
 def make_rl(
         tick_skip: int = 8,
-        agent_tick_skip: int = 8,
         spawn_opponents: bool = False,
         team_size: int = 1,
         launch_preference: LaunchPreference = LaunchPreference.EPIC,
@@ -84,6 +83,5 @@ def make_rl(
         force_paging=force_paging,
         auto_minimize=auto_minimize,
         raise_on_crash=raise_on_crash,
-        agent_tick_skip=agent_tick_skip,
         harvester=harvester
     )

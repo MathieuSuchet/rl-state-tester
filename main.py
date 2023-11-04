@@ -1,17 +1,21 @@
 import os
 
+import numpy as np
 from rlgym.gamelaunch import LaunchPreference
-from rlgym_sim.utils.action_parsers import ContinuousAction, DiscreteAction
+from rlgym_ppo import Learner
+from rlgym_sim.utils.action_parsers import DiscreteAction
 from rlgym_sim.utils.obs_builders import AdvancedObs
-from rlgym_sim.utils.terminal_conditions.common_conditions import GoalScoredCondition, TimeoutCondition
-from stable_baselines3 import PPO
-from stable_baselines3.ppo import MlpPolicy
+from rlgym_sim.utils.terminal_conditions.common_conditions import GoalScoredCondition
+
+from AstraObs import AstraObs
+from ArtemisParser import ArtemisParser
 
 import reward_config
 import rewards
 import state_config
 import states
 from rl_state_tester.global_harvesters.callbacks import MultiCallback
+from rl_state_tester.gymnasium_conversion.gymnasium_to_gym_conversion import convert_model_to_gym
 from rl_state_tester.hot_reload.hot_reload import HotReload, HotReloadConfig
 from rl_state_tester.live_testing.live_playing import LivePlaying
 from rl_state_tester.make import make_sim, make_rl
@@ -37,13 +41,12 @@ def state_action():
 
 env = make_rl(
     tick_skip=1,
-    agent_tick_skip=8,
+    launch_preference=LaunchPreference.STEAM,
     reward_fn=cb,
     state_setter=state_config.state_setter,
-    team_size=3,
-    launch_preference=LaunchPreference.STEAM,
-    obs_builder=AdvancedObs(),
-    action_parser=DiscreteAction(),
+    team_size=2,
+    obs_builder=AstraObs(),
+    action_parser=ArtemisParser(),
     spawn_opponents=True,
     terminal_conditions=[GoalScoredCondition()],
     harvester=MultiCallback(
@@ -52,9 +55,9 @@ env = make_rl(
             LivePlaying(player_deadzone=0.23),
 
             # Log rewards every %print_frequency% steps
-            RewardLogger(
-                reward_legends=[r.__class__.__name__ for r in cb.reward_functions],
-                print_frequency=200),
+            # RewardLogger(
+            #     reward_legends=[r.__class__.__name__ for r in cb.reward_functions],
+            #     print_frequency=200),
 
             # Hot reload of rewards and states
             HotReload(targets=(
@@ -76,25 +79,52 @@ env = make_rl(
         ])
 )
 
-agent = PPO(policy=MlpPolicy, env=env)
 
-obs = env.reset()
-running = True
+# agent = convert_model_to_gym("rl_model_24403263860_steps.zip", env, 'cpu')
 
-hot_reload_path = "rewards.py"
-last_modified_time = os.stat(hot_reload_path).st_mtime
+def create_env():
+    return env
 
-while running:
-    try:
-        actions, _ = agent.predict(obs)
 
-        obs, reward, terminal, info = env.step(actions)
+if __name__ == "__main__":
+    # agent = Learner(
+    #     env_create_function=create_env,
+    #     ts_per_iteration=1000,
+    #     timestep_limit=2000,
+    #
+    #     n_proc=1
+    # )
+    agent = convert_model_to_gym("7217535684.zip", env, 'cpu')
+    obs = env.reset()
+    running = True
 
-        if terminal:
-            obs = env.reset()
+    all_obs = [*obs[1:]]
+    all_actions = []
+    current_tick = 0
 
-    except KeyboardInterrupt:
-        print("Interruption detected, stopping")
-        running = False
+    while running:
+        try:
+            # actions, log_probs = agent.agent.policy.get_action(obs)
+            # actions = actions.numpy().astype(np.float32)
 
-env.close()
+            actions, _ = agent.predict(obs)
+            actions = np.array(actions)
+
+            if current_tick == 0:
+                all_actions = actions[1:]
+            else:
+                actions[1:] = all_actions
+
+            current_tick += 1
+            current_tick %= 8
+
+            obs, reward, terminal, info = env.step(actions)
+
+            if terminal:
+                obs = env.reset()
+
+        except KeyboardInterrupt:
+            print("Interruption detected, stopping")
+            running = False
+
+    env.close()

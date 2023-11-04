@@ -1,3 +1,4 @@
+import copy
 from typing import List, Union, Dict
 
 import numpy as np
@@ -11,8 +12,10 @@ class LivePlaying(Callback):
         self.player = PlayerAgent(player_deadzone)
 
     def _on_pre_step(self, actions: np.array):
-        actions[0] = np.array(self.player.get_controls())
-        return actions
+        act = copy.copy(actions)
+        act[0] = np.array(self.player.get_controls())
+
+        return act
 
     def _on_reset(self, obs: np.array, info: Dict[str, object], *args, **kwargs):
         pass
