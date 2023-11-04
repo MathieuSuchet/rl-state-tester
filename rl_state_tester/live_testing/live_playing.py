@@ -11,7 +11,8 @@ class LivePlaying(Callback):
         self.player = PlayerAgent(player_deadzone)
 
     def _on_pre_step(self, actions: np.array):
-        return np.array(self.player.get_controls())
+        actions[0] = np.array(self.player.get_controls())
+        return actions
 
     def _on_reset(self, obs: np.array, info: Dict[str, object], *args, **kwargs):
         pass

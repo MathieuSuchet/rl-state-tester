@@ -6,6 +6,7 @@ from stable_baselines3 import PPO
 
 from rl_state_tester.global_harvesters.callbacks import Callback
 from rl_state_tester.global_harvesters.standalone_runner import StandaloneRunner
+from rl_state_tester.utils.rewards.common_rewards import RewardResult
 
 
 class RewardHarvester(Callback):
@@ -30,7 +31,7 @@ class RewardHarvester(Callback):
         self._n_episodes += 1
         self._all_rewards.append([])
 
-    def _on_step(self, obs: np.array, action, reward: List[Union[float, int]], terminal: Union[List[bool], bool],
+    def _on_step(self, obs: np.array, action, reward: List[Union[float, int, RewardResult]], terminal: Union[List[bool], bool],
                  info: Dict[str, object], *args, **kwargs):
         self._all_rewards[self._n_episodes].append(reward)
 

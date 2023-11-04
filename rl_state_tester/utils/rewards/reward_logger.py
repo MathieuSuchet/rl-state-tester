@@ -5,21 +5,23 @@ import numpy as np
 from rlgym.utils.gamestates import GameState
 
 from rl_state_tester.global_harvesters.callbacks import Callback
+from rl_state_tester.utils.rewards.common_rewards import RewardResult
 
 
-def _print_rewards(state: GameState, rewards: List[Union[int, float, List]], rewards_legends):
+def _print_rewards(state: GameState, rewards: List[Union[int, float, List]], rewards_legends: List[str]):
     os.system('cls')
     max_len = max([len(name) for name in rewards_legends])
 
     spacing = (max_len + 30)
 
-    for i, player in enumerate(state.players):
+    for i, player in enumerate(state.players[:2]):
         print("_" * spacing)
         print(f"|{'':<{spacing - 3}}", "|")
         print("| Player", player.car_id, ":" + f"{'|': >{spacing - (len(f'Player {player.car_id} :') + 2)}}")
         print(f"|{'':<{spacing - 3}}", "|")
         for r, l in zip(rewards[i], rewards_legends):
-            print("| ", f"{l: <{max_len}}", ":", f"{r:<{10}.3f} ", f"{'|': >{spacing - (max_len + 18)}}")
+            if isinstance(r, RewardResult):
+                print("| ", f"{l: <{max_len}}", ":", f"{r.reward:<{10}.3f} {'(Error : ' + str(r.error) + ')' if r.error else ''}", f"{'|': >{spacing - (max_len + 18)}}")
 
         print("|" + "_" * (spacing - 2) + "|\n")
 
@@ -33,6 +35,9 @@ class RewardLogger(Callback):
         self.print_frequency = print_frequency
         self.reward_legends = reward_legends
         self.count = 0
+
+    def update_reward_legends(self, legends):
+        self.reward_legends = legends
 
     def _on_reset(self, obs: np.array, info: Dict[str, object], *args, **kwargs):
         pass

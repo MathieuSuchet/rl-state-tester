@@ -3,6 +3,8 @@ from typing import List, Union, Dict
 
 import numpy as np
 
+from rl_state_tester.utils.rewards.common_rewards import RewardResult
+
 
 class Callback(ABC):
     def _on_pre_step(self, actions: np.array):
@@ -50,7 +52,7 @@ class MultiCallback(Callback):
         for callback in self.callbacks:
             callback.on_reset(obs, info, args, kwargs)
 
-    def _on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]],
+    def _on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int, RewardResult]],
                  terminal: Union[List[bool], bool],
                  info: Dict[str, object], *args, **kwargs):
         for callback in self.callbacks:

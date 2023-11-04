@@ -9,7 +9,8 @@ from rlgym_sim.utils.common_values import BACK_WALL_Y, SIDE_WALL_X, CEILING_Z
 from rlgym_sim.utils.gamestates import GameState
 from stable_baselines3 import PPO
 
-from rl_state_tester.global_harvesters.standalone_runner import StandaloneRunner
+from rl_state_tester.global_harvesters.callbacks import Callback
+from rl_state_tester.utils.rewards.common_rewards import RewardResult
 
 CORNERS = np.array([
     np.array([-SIDE_WALL_X, BACK_WALL_Y, 0]),
@@ -68,14 +69,14 @@ def calculate_stats_from_players(players):
     return all_stats
 
 
-class StatHarvester(StandaloneRunner, ABC):
+class StatHarvester(Callback, ABC):
 
     def __init__(self, env: Gym, agent: PPO, rendered: bool, deterministic: bool):
         super().__init__(env, agent, rendered, deterministic)
         self.data = []
         self.n_episodes = -1
 
-    def _on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]], terminal: Union[List[bool], bool],
+    def _on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int, RewardResult]], terminal: Union[List[bool], bool],
                  info: Dict[str, object], *args, **kwargs):
         state: GameState = info["state"]
         self.data.append(np.array(self._get_data(state)))
@@ -104,7 +105,7 @@ class MultiStatHarvester(StatHarvester):
 
         self.harvesters = harvesters
 
-    def _on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]], terminal: Union[List[bool], bool],
+    def _on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int, RewardResult]], terminal: Union[List[bool], bool],
                  info: Dict[str, object], *args, **kwargs):
         for harvester in self.harvesters:
             harvester.on_step(obs, action, reward, terminal, info, args, kwargs)

@@ -1,42 +1,42 @@
 import os
-from typing import Union, List
 
-from rlgym.gamelaunch import LaunchPreference
-from rlgym.utils.gamestates import GameState
 from rlgym_sim.utils.action_parsers import ContinuousAction
 from rlgym_sim.utils.obs_builders import AdvancedObs
-from rlgym_sim.utils.reward_functions.common_rewards import EventReward, ConstantReward, VelocityReward, \
-    VelocityBallToGoalReward
 from rlgym_sim.utils.state_setters import DefaultState
 from rlgym_sim.utils.terminal_conditions.common_conditions import GoalScoredCondition
 from stable_baselines3 import PPO
 from stable_baselines3.ppo import MlpPolicy
 
+import reward_config
+import rewards
+import state_config
+import states
 from rl_state_tester.global_harvesters.callbacks import MultiCallback
+from rl_state_tester.hot_reload.hot_reload import HotReload, HotReloadConfig
 from rl_state_tester.live_testing.live_playing import LivePlaying
-from rl_state_tester.make import make_rl, make_sim
-from rl_state_tester.utils.rewards.RewardLogger import RewardLogger
-from rl_state_tester.utils.rewards.common_rewards import SplitCombinedReward
+from rl_state_tester.make import make_sim
+from rl_state_tester.utils.rewards.reward_logger import RewardLogger
+
+cb = reward_config.reward_function
+
+reward_logger = RewardLogger(
+    reward_legends=[r.__class__.__name__ for r in cb.reward_functions],
+    print_frequency=200)
 
 
-class VeryVeryVeryLongRewardLabelThatNeedToBeShortened(VelocityReward):
-    pass
+def reward_action():
+    global env
+    print("Hot reload request received")
+
+    env.update_reward(reward_config.reward_function)
+    print("Hot reload done")
 
 
-reward_function = (
-    EventReward(team_goal=120, goal=100, concede=-150, save=50, shot=60, demo=60),
-    ConstantReward(),
-    VelocityReward(),
-    VelocityBallToGoalReward(),
-    VeryVeryVeryLongRewardLabelThatNeedToBeShortened()
-)
-
-rewards_weight = (1, 15, 1, 8, 1)
-
-cb = SplitCombinedReward(
-    reward_functions=reward_function,
-    reward_weights=rewards_weight
-)
+def state_action():
+    global env
+    print("Hot reload request received")
+    env.update_state(state_config.state_setter)
+    print("Hot reload done")
 
 
 env = make_sim(
@@ -51,20 +51,45 @@ env = make_sim(
     harvester=MultiCallback(
         callbacks=[
             LivePlaying(player_deadzone=0.23),
-            RewardLogger(
-                reward_legends=[r.__class__.__name__ for r in reward_function],
-                print_frequency=200)])
+            reward_logger,
+            HotReload(targets=(
+                HotReloadConfig(
+                    script_path="rewards.py",
+                    config_path="reward_config.py",
+                    action=reward_action,
+                    script_module=rewards,
+                    config_module=reward_config
+                ),
+                HotReloadConfig(
+                    script_path="states.py",
+                    config_path="state_config.py",
+                    action=state_action,
+                    script_module=states,
+                    config_module=state_config
+                )
+            ))
+        ])
 )
 
 agent = PPO(policy=MlpPolicy, env=env)
 
 obs = env.reset()
-for i in range(500000):
-    actions, _ = agent.predict(obs)
+running = True
 
-    obs, reward, terminal, info = env.step(actions)
+hot_reload_path = "rewards.py"
+last_modified_time = os.stat(hot_reload_path).st_mtime
 
-    if terminal:
-        obs = env.reset()
+while running:
+    try:
+        actions, _ = agent.predict(obs)
+
+        obs, reward, terminal, info = env.step(actions)
+
+        if terminal:
+            obs = env.reset()
+
+    except KeyboardInterrupt:
+        print("Interruption detected, stopping")
+        running = False
 
 env.close()
