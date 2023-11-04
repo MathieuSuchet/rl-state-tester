@@ -2,8 +2,7 @@ import os
 
 from rlgym_sim.utils.action_parsers import ContinuousAction
 from rlgym_sim.utils.obs_builders import AdvancedObs
-from rlgym_sim.utils.state_setters import DefaultState
-from rlgym_sim.utils.terminal_conditions.common_conditions import GoalScoredCondition
+from rlgym_sim.utils.terminal_conditions.common_conditions import GoalScoredCondition, TimeoutCondition
 from stable_baselines3 import PPO
 from stable_baselines3.ppo import MlpPolicy
 
@@ -18,10 +17,6 @@ from rl_state_tester.make import make_sim
 from rl_state_tester.utils.rewards.reward_logger import RewardLogger
 
 cb = reward_config.reward_function
-
-reward_logger = RewardLogger(
-    reward_legends=[r.__class__.__name__ for r in cb.reward_functions],
-    print_frequency=200)
 
 
 def reward_action():
@@ -42,16 +37,23 @@ def state_action():
 env = make_sim(
     tick_skip=1,
     reward_fn=cb,
-    state_setter=DefaultState(),
+    state_setter=state_config.state_setter,
     team_size=3,
     obs_builder=AdvancedObs(),
     action_parser=ContinuousAction(),
     spawn_opponents=True,
-    terminal_conditions=[GoalScoredCondition()],
+    terminal_conditions=[GoalScoredCondition(), TimeoutCondition(500)],
     harvester=MultiCallback(
         callbacks=[
+            # Allow you to play as agent 0
             LivePlaying(player_deadzone=0.23),
-            reward_logger,
+
+            # Log rewards every %print_frequency% steps
+            RewardLogger(
+                reward_legends=[r.__class__.__name__ for r in cb.reward_functions],
+                print_frequency=200),
+
+            # Hot reload of rewards and states
             HotReload(targets=(
                 HotReloadConfig(
                     script_path="rewards.py",

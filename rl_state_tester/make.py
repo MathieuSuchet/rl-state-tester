@@ -1,8 +1,7 @@
 from typing import List, Optional
 
-from rlgym.gamelaunch import LaunchPreference
-from rlgym_sim.envs import Match as SimMatch
 from rlgym.envs.match import Match as RLMatch
+from rlgym.gamelaunch import LaunchPreference
 from rlgym_sim.utils.action_parsers import DefaultAction
 from rlgym_sim.utils.obs_builders import DefaultObs
 from rlgym_sim.utils.reward_functions import DefaultReward
@@ -10,7 +9,7 @@ from rlgym_sim.utils.state_setters import DefaultState
 from rlgym_sim.utils.terminal_conditions import common_conditions
 
 from rl_state_tester.global_harvesters.callbacks import Callback
-from rl_state_tester.utils.envs import HarvestableEnv, HarvestableEnvRL
+from rl_state_tester.utils.envs import HarvestableEnv, HarvestableEnvRL, VerifiedSimMatch, VerifiedGymMatch
 
 
 def make_sim(tick_skip: int = 8,
@@ -27,7 +26,7 @@ def make_sim(tick_skip: int = 8,
              action_parser: object = DefaultAction(),
              state_setter: object = DefaultState(),
              harvester: Optional[Callback] = None):
-    match = SimMatch(
+    match = VerifiedSimMatch(
         obs_builder=obs_builder,
         action_parser=action_parser,
         state_setter=state_setter,
@@ -66,7 +65,7 @@ def make_rl(
         action_parser: object = DefaultAction(),
         state_setter: object = DefaultState(),
         harvester: Optional[Callback] = None):
-    match = RLMatch(
+    match = VerifiedGymMatch(
         tick_skip=tick_skip,
         game_speed=1,
         obs_builder=obs_builder,
