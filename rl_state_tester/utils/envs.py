@@ -4,7 +4,7 @@ from typing import Tuple, List, Union, Any, Dict
 import numpy as np
 from rlgym.gamelaunch import LaunchPreference
 from rlgym.gym import Gym as GymRL
-from rlgym.rocket_league.game.communication import Message
+from rlgym.communication import Message
 from rlgym.utils import StateSetter
 from rlgym_sim.gym import Gym as GymSim
 
