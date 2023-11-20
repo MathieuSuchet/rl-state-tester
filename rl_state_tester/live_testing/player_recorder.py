@@ -1,3 +1,6 @@
+import time
+from threading import Thread
+
 import pygame.joystick
 
 JUMP = 0
@@ -20,10 +23,10 @@ class PlayerAgent:
     def __init__(self, player_deadzone):
         pygame.joystick.init()
         pygame.init()
-        self.stick = pygame.joystick.Joystick(0)
-        self.stick.init()
+        self.stick = None
         self.player_deadzone = player_deadzone
-        self.last_jump = self.stick.get_button(JUMP)
+        self.last_jump = None
+        self.started = False
 
         # car_controls.throttle = controls[i * n + 1]
         # car_controls.steer = controls[i * n + 2]
@@ -34,8 +37,35 @@ class PlayerAgent:
         # car_controls.boost = controls[i * n + 7] == 1
         # car_controls.handbrake = controls[i * n + 8] == 1
 
+    def _check_for_joystick(self):
+        try:
+            self.stick = pygame.joystick.Joystick(0)
+            return True
+        except Exception:
+            return False
+
+    def start(self):
+        try:
+            self.stick = pygame.joystick.Joystick(0)
+            self.stick.init()
+            self.last_jump = self.stick.get_button(JUMP)
+            self.started = True
+        except Exception as e:
+            print("Problem encountered when starting the live player:", e)
+
+
     def get_controls(self):
+        if not self.started:
+            return [0] * 8
+
         pygame.event.pump()
+
+        try:
+            self.stick.get_button(0)
+        except Exception:
+            if not self._check_for_joystick():
+                return
+
         jump = self.stick.get_button(JUMP)
         boost = self.stick.get_button(BOOST)
         handbrake = self.stick.get_button(HANDBRAKE)

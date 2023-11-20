@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Union, Dict, NamedTuple
+from typing import List, Union, Dict, NamedTuple, Optional, Type
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -71,8 +71,8 @@ def calculate_stats_from_players(players):
 
 class StatHarvester(Callback, ABC):
 
-    def __init__(self, env: Gym, agent: PPO, rendered: bool, deterministic: bool):
-        super().__init__(env, agent, rendered, deterministic)
+    def __init__(self, depends_on: Optional[List[Type]] = None):
+        super().__init__(depends_on)
         self.data = []
         self.n_episodes = -1
 
@@ -100,8 +100,8 @@ class MultiStatHarvester(StatHarvester):
     def _get_data(self, state: GameState):
         pass
 
-    def __init__(self, env: Gym, agent: PPO, rendered: bool, deterministic: bool, harvesters: List[StatHarvester]):
-        super().__init__(env, agent, rendered, deterministic)
+    def __init__(self, harvesters: List[StatHarvester], depends_on: Optional[List[Type]] = None):
+        super().__init__(depends_on)
 
         self.harvesters = harvesters
 

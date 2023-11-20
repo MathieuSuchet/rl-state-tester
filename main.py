@@ -1,25 +1,22 @@
-import os
-
 import numpy as np
 from rlgym.gamelaunch import LaunchPreference
-from rlgym_ppo import Learner
-from rlgym_sim.utils.action_parsers import DiscreteAction
-from rlgym_sim.utils.obs_builders import AdvancedObs
-from rlgym_sim.utils.terminal_conditions.common_conditions import GoalScoredCondition
-
-from AstraObs import AstraObs
-from ArtemisParser import ArtemisParser
 
 import reward_config
 import rewards
 import state_config
 import states
+from ArtemisParser import ArtemisParser
+from AstraObs import AstraObs
 from rl_state_tester.global_harvesters.callbacks import MultiCallback
 from rl_state_tester.gymnasium_conversion.gymnasium_to_gym_conversion import convert_model_to_gym
 from rl_state_tester.hot_reload.hot_reload import HotReload, HotReloadConfig
 from rl_state_tester.live_testing.live_playing import LivePlaying
 from rl_state_tester.make import make_sim, make_rl
-from rl_state_tester.utils.rewards.reward_logger import RewardLogger
+from rl_state_tester.presetting.clip_manager import ClipManager
+from rl_state_tester.utils.commands import ClipManagerCommands, StateActionClipperCommands, Command, \
+    StateActionReplayerCommands, LivePlayingCommands
+from rl_state_tester.utils.orchestrator import Orchestrator, Distributor, Observer
+from rl_state_tester.utils.state_setters.common_setters import MultiSetter, ClipSetter
 
 cb = reward_config.reward_function
 
@@ -39,44 +36,80 @@ def state_action():
     print("Hot reload done")
 
 
-env = make_rl(
+clip_setter = ClipSetter(max_team_size=3)
+
+callbacks = [
+    # Allow you to play as agent 0
+    LivePlaying(
+        player_deadzone=0.23,
+    ),
+
+    # Log rewards every %print_frequency% steps
+    # RewardLogger(
+    #     reward_legends=[r.__class__.__name__ for r in cb.reward_functions],
+    #     print_frequency=200),
+
+    # Hot reload of rewards and states
+    HotReload(targets=(
+        HotReloadConfig(
+            script_path="rewards.py",
+            config_path="reward_config.py",
+            action=reward_action,
+            script_module=rewards,
+            config_module=reward_config
+        ),
+        HotReloadConfig(
+            script_path="states.py",
+            config_path="state_config.py",
+            action=state_action,
+            script_module=states,
+            config_module=state_config
+        )
+    )),
+    ClipManager(
+        clip_path='clips',
+        legend_clip_path='clips_legend.txt',
+        n_steps_saved=50,
+        clip_setter=clip_setter,
+    )
+]
+
+env = make_sim(
     tick_skip=1,
-    launch_preference=LaunchPreference.STEAM,
+    # launch_preference=LaunchPreference.STEAM,
     reward_fn=cb,
-    state_setter=state_config.state_setter,
+    state_setter=MultiSetter(
+        setters=[
+            state_config.state_setter,
+            clip_setter
+        ]
+    ),
     team_size=2,
     obs_builder=AstraObs(),
     action_parser=ArtemisParser(),
     spawn_opponents=True,
-    terminal_conditions=[GoalScoredCondition()],
+    terminal_conditions=[],
     harvester=MultiCallback(
-        callbacks=[
-            # Allow you to play as agent 0
-            LivePlaying(player_deadzone=0.23),
+        callbacks=callbacks)
+)
+others = [
+    Observer(env)
+]
 
-            # Log rewards every %print_frequency% steps
-            # RewardLogger(
-            #     reward_legends=[r.__class__.__name__ for r in cb.reward_functions],
-            #     print_frequency=200),
+# Dependency injection I guess ?
+distrib = Distributor(callbacks, others)
 
-            # Hot reload of rewards and states
-            HotReload(targets=(
-                HotReloadConfig(
-                    script_path="rewards.py",
-                    config_path="reward_config.py",
-                    action=reward_action,
-                    script_module=rewards,
-                    config_module=reward_config
-                ),
-                HotReloadConfig(
-                    script_path="states.py",
-                    config_path="state_config.py",
-                    action=state_action,
-                    script_module=states,
-                    config_module=state_config
-                )
-            ))
-        ])
+all_commands = []
+for h in distrib.harvesters:
+    all_commands.extend(h.commands.commands)
+
+for h in distrib.others:
+    if hasattr(h, "commands"):
+        all_commands.extend(h.commands.commands)
+
+
+orch = Orchestrator(
+    commands=all_commands
 )
 
 
@@ -94,8 +127,8 @@ if __name__ == "__main__":
     #
     #     n_proc=1
     # )
-    agent = convert_model_to_gym("7217535684.zip", env, 'cpu')
-    obs = env.reset()
+    agent = convert_model_to_gym("rl_model_24403263860_steps(1).zip", env, 'cpu')
+    obs, info = env.reset(True)
     running = True
 
     all_obs = [*obs[1:]]
@@ -121,7 +154,7 @@ if __name__ == "__main__":
             obs, reward, terminal, info = env.step(actions)
 
             if terminal:
-                obs = env.reset()
+                obs, info = env.reset(True)
 
         except KeyboardInterrupt:
             print("Interruption detected, stopping")

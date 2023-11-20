@@ -1,18 +1,20 @@
-import copy
-from typing import Tuple, List, Union, Any, Dict
+import time
+from typing import Tuple, List, Union, Any, Dict, Type
 
 import numpy as np
+from rlgym.communication import Message
+from rlgym.envs.match import Match as GymMatch
 from rlgym.gamelaunch import LaunchPreference
 from rlgym.gym import Gym as GymRL
-from rlgym.rocket_league.game.communication import Message
 from rlgym.utils import StateSetter
+from rlgym.utils.gamestates import GameState
+from rlgym_sim.envs.match import Match as SimMatch
 from rlgym_sim.gym import Gym as GymSim
 
-from rlgym.envs.match import Match as GymMatch
-from rlgym_sim.envs.match import Match as SimMatch
-
 from rl_state_tester.global_harvesters.callbacks import Callback, MultiCallback
+from rl_state_tester.presetting.clip_utils import Clip
 from rl_state_tester.utils.rewards.reward_logger import RewardLogger
+from rl_state_tester.utils.state_setters.common_setters import MultiSetter
 from states import StateResetResult
 
 
@@ -24,6 +26,14 @@ class HarvestableEnv(GymSim):
         super().__init__(match, copy_gamestate_every_step, dodge_deadzone, tick_skip, gravity, boost_consumption)
         self.harvester = harvester
         self.agent_tick_skip = agent_tick_skip
+        self.pause = False
+        self.force_terminal = False
+
+    def toggle_pause(self):
+        self.pause = not self.pause
+
+    def force_reset(self):
+        self.force_terminal = True
 
     def update_reward(self, reward):
         self._match._reward_fn = reward
@@ -43,6 +53,10 @@ class HarvestableEnv(GymSim):
                 This should be called once when the environment is initialized, then every time the `done` flag from the `step()`
                 function is `True`.
                 """
+        if self.force_terminal:
+            self.force_terminal = False
+
+        self.harvester.on_pre_reset()
 
         state_str, error_result = self._match.get_reset_state()
         state = self._game.reset(state_str)
@@ -75,6 +89,10 @@ class HarvestableEnv(GymSim):
                 :return: A tuple containing (obs, rewards, done, info)
                 """
 
+        while self.pause:
+            time.sleep(.3)
+
+
         actions = self._match.format_actions(self._match.parse_actions(actions, self._prev_state))
         new_actions = self.harvester.on_pre_step(actions)
 
@@ -97,12 +115,27 @@ class HarvestableEnv(GymSim):
         }
 
         self.harvester.on_step(obs, actions, reward, done, info)
+        obs, reward, done, info = self.harvester.on_post_step(obs, actions, reward, done, info)
 
-        return obs, reward, done, info
+        return obs, reward, done if not self.force_terminal else True, info
 
     def close(self):
         super().close()
         self.harvester.on_close()
+
+    def _is_multi_setter(self, match_setter: StateSetter):
+        if not isinstance(match_setter, MultiSetter):
+            raise Exception(f"Cannot use setter picking on setter {match_setter.__class__.__name__}")
+
+    def update_ss_setter(self, state_type: Type[StateSetter], count: int = 0):
+        match_setter = self._match.get_setter()
+        self._is_multi_setter(match_setter)
+        match_setter.go_to(state_type, count)
+
+    def add_clip(self, clip: Clip):
+        match_setter = self._match.get_setter()
+        self._is_multi_setter(match_setter)
+        match_setter.add_clip(clip)
 
 
 class HarvestableEnvRL(GymRL):
@@ -124,6 +157,7 @@ class HarvestableEnvRL(GymRL):
                 function is `True`.
                 """
 
+        self.harvester.on_pre_reset()
         state_str, error_result = self._match.get_reset_state()
 
         exception = self._comm_handler.send_message(header=Message.RLGYM_RESET_GAME_STATE_MESSAGE_HEADER,
@@ -138,6 +172,7 @@ class HarvestableEnvRL(GymRL):
                 sys.exit(-1)
 
         state = self._receive_state()
+
         self._match.episode_reset(state)
         self._prev_state = state
 
@@ -194,12 +229,28 @@ class HarvestableEnvRL(GymRL):
         }
 
         self.harvester.on_step(obs, actions, reward, done, info)
+        obs, reward, done, info = self.harvester.on_post_step(obs, actions, reward, done, info)
 
         return obs, reward, done, info
 
     def close(self):
         super().close()
         self.harvester.on_close()
+
+    def _is_multi_setter(self, match_setter: StateSetter):
+        if not isinstance(match_setter, MultiSetter):
+            raise Exception(f"Cannot use setter picking on setter {match_setter.__class__.__name__}")
+
+    def update_ss_setter(self, state_type: Type[StateSetter], count: int = 0):
+        match_setter = self._match.get_setter()
+        self._is_multi_setter(match_setter)
+        match_setter.go_to(state_type, count)
+
+    def add_clip(self, clip: Clip):
+        match_setter = self._match.get_setter()
+        self._is_multi_setter(match_setter)
+        match_setter.add_clip(clip)
+
 
     def _send_actions(self, actions):
         assert isinstance(actions, np.ndarray), "Invalid action type, action must be of type np.ndarray(n, 8)."
@@ -224,16 +275,20 @@ class HarvestableEnvRL(GymRL):
 
 
 class VerifiedSimMatch(SimMatch):
+    def get_setter(self):
+        return self._state_setter
+
     def get_reset_state(self) -> Tuple[list, StateResetResult]:
         new_state = self._state_setter.build_wrapper(self.team_size, self.spawn_opponents)
         state_result = self._state_setter.reset(new_state)
-        state = new_state.format_state()
-
-        return state, state_result
+        return new_state.format_state(), state_result
 
 
 class VerifiedGymMatch(GymMatch):
+    def get_setter(self):
+        return self._state_setter
     def get_reset_state(self) -> Tuple[list, StateResetResult]:
         new_state = self._state_setter.build_wrapper(self._team_size, self._spawn_opponents)
         result = self._state_setter.reset(new_state)
+
         return new_state.format_state(), result

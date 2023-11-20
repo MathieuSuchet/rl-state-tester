@@ -1,5 +1,5 @@
 import os
-from typing import List, Union, Dict, Callable
+from typing import List, Union, Dict, Callable, Type, Optional, Sequence
 
 import numpy as np
 from rlgym.utils.gamestates import GameState
@@ -21,23 +21,32 @@ def _print_rewards(state: GameState, rewards: List[Union[int, float, List]], rew
         print(f"|{'':<{spacing - 3}}", "|")
         for r, l in zip(rewards[i], rewards_legends):
             if isinstance(r, RewardResult):
-                print("| ", f"{l: <{max_len}}", ":", f"{r.reward:<{10}.3f} {'(Error : ' + str(r.error) + ')' if r.error else ''}", f"{'|': >{spacing - (max_len + 18)}}")
+                print("| ", f"{l: <{max_len}}", ":",
+                      f"{r.reward:<{10}.3f} {'(Error : ' + str(r.error) + ')' if r.error else ''}",
+                      f"{'|': >{spacing - (max_len + 18)}}")
 
         print("|" + "_" * (spacing - 2) + "|\n")
 
 
 class RewardLogger(Callback):
 
-    def __init__(self, reward_legends,
-                 print_function: Callable[[GameState, List[Union[float, int, List, List[str]]]], None] = _print_rewards,
-                 print_frequency: int = 10):
+    def __init__(
+            self,
+            reward_legends: Optional[Sequence[str]] = None,
+            print_function: Callable[[GameState, List[Union[float, int, List]], List[str]], None] = _print_rewards,
+            print_frequency: int = 10,
+            depends_on: Optional[List[Type]] = None):
+        super().__init__(depends_on)
+        self.reward_legends = reward_legends
+        if isinstance(reward_legends, type(None)):
+            self.reward_legends = []
         self.print_func = print_function
         self.print_frequency = print_frequency
-        self.reward_legends = reward_legends
         self.count = 0
 
     def update_reward_legends(self, legends):
-        self.reward_legends = legends
+        if self._started:
+            self.reward_legends = legends
 
     def _on_reset(self, obs: np.array, info: Dict[str, object], *args, **kwargs):
         pass

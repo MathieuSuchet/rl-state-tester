@@ -1,7 +1,7 @@
 import importlib
 import os
 from types import ModuleType
-from typing import List, Union, Dict, Callable, Tuple
+from typing import List, Union, Dict, Callable, Tuple, Optional, Type
 
 import numpy as np
 
@@ -39,10 +39,20 @@ class HotReloadConfig:
 
 
 class HotReload(Callback):
-    def __init__(self, targets: Tuple[HotReloadConfig, ...]):
+
+    def __init__(
+            self,
+            targets: Optional[Tuple[HotReloadConfig, ...]] = None,
+            depends_on: Optional[List[Type]] = None
+    ):
+        super().__init__(depends_on)
         self.targets = targets
 
     def _on_pre_step(self, actions: np.array):
+
+        if isinstance(self.targets, type(None)):
+            return actions
+
         for i, target in enumerate(self.targets):
             if target.update():
                 try:

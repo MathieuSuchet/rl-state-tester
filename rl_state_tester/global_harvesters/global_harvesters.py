@@ -1,22 +1,18 @@
-from typing import List, Union, Dict, Optional
+from typing import List, Union, Dict, Optional, Type
 
 import numpy as np
-from rlgym_sim.gym import Gym
-from stable_baselines3 import PPO
 
 from rl_state_tester.global_harvesters.callbacks import Callback
-from rl_state_tester.global_harvesters.standalone_runner import StandaloneRunner
 from rl_state_tester.utils.rewards.common_rewards import RewardResult
 
 
 class RewardHarvester(Callback):
-    def __init__(
-            self
-    ):
+    def __init__(self, depends_on: Optional[List[Type]] = None):
 
         # All episodes shape   : [n_episodes, ?, n_players, 1] (Can't treat all episodes at once on axis 0 and 2 ?)
         # Episode Reward shape : [n_steps_in_ep, n_players, 1]
         # Reward shape         : [n_players, 1]
+        super().__init__(depends_on)
         self._all_rewards = [[]]
         self._n_episodes = -1
 
@@ -40,7 +36,8 @@ class RewardHarvester(Callback):
 
 
 class StateHarvester(Callback):
-    def __init__(self):
+    def __init__(self, depends_on: Optional[List[Type]] = None):
+        super().__init__(depends_on)
         self._all_episodes = [[]]
         self._nb_episodes = -1
 
@@ -69,7 +66,8 @@ class StateHarvester(Callback):
 
 
 class ActionHarvester(Callback):
-    def __init__(self):
+    def __init__(self, depends_on: Optional[List[Type]] = None):
+        super().__init__(depends_on)
         self.actions = []
         self.n_episodes = -1
 
