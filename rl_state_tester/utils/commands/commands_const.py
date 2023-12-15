@@ -1,0 +1,1 @@
+ACTIVATE_KEY = 'a'

@@ -1,10 +1,10 @@
-import numpy as np
 from rlgym.rocket_league.reward_functions.goal_reward import GoalReward
 from rlgym.rocket_league.reward_functions.touch_reward import TouchReward
 from rlgym_ppo import Learner
 
-from rl_state_tester.reward_state_replayer import RewardStateReplayer
+from rl_state_tester.init import run
 from rl_state_tester.make import make
+from rl_state_tester.reward_state_replayer import RewardStateReplayer
 from rl_state_tester.utils.rewards.common_rewards import SplitCombinedReward
 
 cb = SplitCombinedReward(
@@ -41,14 +41,4 @@ if __name__ == "__main__":
         load_wandb=False,
     )
 
-    obs = env.reset()
-    for i in range(100):
-        actions, _ = agent.agent.policy.get_action(obs)
-        actions = actions.numpy().astype(np.float32)
-        actions = actions.reshape((*actions.shape, 1))
-        obs, reward, terminated, truncated, _ = env.step(actions)
-
-        if terminated or truncated:
-            obs = env.reset()
-
-    env.close()
+    run(env, agent)
