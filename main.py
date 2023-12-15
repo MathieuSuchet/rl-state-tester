@@ -3,17 +3,19 @@ from rlgym.rocket_league.reward_functions.goal_reward import GoalReward
 from rlgym.rocket_league.reward_functions.touch_reward import TouchReward
 from rlgym_ppo import Learner
 
-from reward_state_replayer import RewardStateReplayer
+from rl_state_tester.reward_state_replayer import RewardStateReplayer
 from rl_state_tester.make import make
 from rl_state_tester.utils.rewards.common_rewards import SplitCombinedReward
 
 cb = SplitCombinedReward(
-        (GoalReward(), 1),
-        (TouchReward(), 15)
-    )
+    (GoalReward(), 1),
+    (TouchReward(), 15)
+)
+
 
 def create_env():
     return make(reward_fn=cb, renderer=None, harvester=RewardStateReplayer(rendered=False, combined_reward=cb))
+
 
 if __name__ == "__main__":
 
@@ -50,4 +52,3 @@ if __name__ == "__main__":
             obs = env.reset()
 
     env.close()
-
