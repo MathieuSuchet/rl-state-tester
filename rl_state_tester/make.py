@@ -11,6 +11,7 @@ from rlgym.rocket_league.state_mutators import KickoffMutator, MutatorSequence, 
 from rlgym_ppo.util import RLGymV2GymWrapper
 
 from rl_state_tester.global_harvesters.callbacks import Callback
+from rl_state_tester.utils.commands.orchestrator import Orchestrator
 from rl_state_tester.utils.envs import HarvestableEnv
 
 
@@ -25,7 +26,7 @@ def make(
         transition_engine: TransitionEngine[AgentID, StateType, EngineActionType] = RocketSimEngine(),
         renderer: Optional[Renderer[StateType]] = RLViserRenderer(),
         harvester: Optional[Callback] = None):
-    return RLGymV2GymWrapper(HarvestableEnv(
+    env = HarvestableEnv(
         obs_builder=obs_builder,
         action_parser=action_parser,
         state_mutator=state_setter,
@@ -35,4 +36,10 @@ def make(
         renderer=renderer,
         transition_engine=transition_engine,
         truncation_cond=truncation_cond,
-    ))
+    )
+
+    env.harvester.start()
+
+    Orchestrator(env.harvester.commands.commands)
+
+    return RLGymV2GymWrapper(env)

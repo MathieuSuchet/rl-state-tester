@@ -82,5 +82,6 @@ class PlayerAgent:
             yaw = 0
 
         self.last_jump = jump
+        print([throttle, steer, pitch, yaw, roll, jump, boost, handbrake])
 
         return [throttle, steer, pitch, yaw, roll, jump, boost, handbrake]

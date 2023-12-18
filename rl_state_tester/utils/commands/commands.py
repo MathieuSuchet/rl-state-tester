@@ -11,7 +11,7 @@ class Hittable:
         return []
 
 
-class Command:
+class Command(Hittable):
     def __init__(self, value: str, priority: int, target: Callable = lambda: None,
                  block: Optional[List['Command']] = None):
         self.value = value
@@ -53,3 +53,13 @@ class LivePlayingCommands(Hittable):
     @property
     def commands(self):
         return [self.activate]
+
+class MultiCallbackCommands(Hittable):
+    def __init__(self):
+        self._commands = []
+    @property
+    def commands(self) -> List['Command']:
+        return self._commands
+
+    def append_commands(self, command: Command):
+        self._commands.extend(command.commands)

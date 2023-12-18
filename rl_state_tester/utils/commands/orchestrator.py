@@ -25,6 +25,7 @@ class Orchestrator:
             while self.running:
                 for c in commands:
                     if c.is_pressed():
+                        print(c.value, "has been pressed")
                         c.target()
                 time.sleep(self.command_detection_time)
         except Exception as e:

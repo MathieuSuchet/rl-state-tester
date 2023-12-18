@@ -47,6 +47,7 @@ class RewardHarvester(Callback):
 
 class StateHarvester(Callback):
     def __init__(self):
+        super().__init__()
         self._all_episodes = []
         self._nb_episodes = -2
 

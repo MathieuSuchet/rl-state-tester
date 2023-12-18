@@ -1,12 +1,13 @@
 import copy
-from typing import List, Union, Dict, Optional, Type
+from typing import Dict
 
 import numpy as np
-from rl_state_tester.utils.commands import LivePlayingCommands, Command
-from rl_state_tester.utils.commands_const import ACTIVATE_KEY
+from rlgym.api import AgentID, ObsType, StateType, ActionType, RewardType
 
 from rl_state_tester.global_harvesters.callbacks import Callback
 from rl_state_tester.live_testing.player_recorder import PlayerAgent
+from rl_state_tester.utils.commands.commands import LivePlayingCommands, Command
+from rl_state_tester.utils.commands.commands_const import ACTIVATE_KEY
 
 DEFAULT_DEADZONE = 0.2
 DEFAULT_COMMANDS = LivePlayingCommands(
@@ -17,6 +18,7 @@ DEFAULT_COMMANDS = LivePlayingCommands(
 class LivePlaying(Callback):
     def __init__(
             self,
+            commands: LivePlayingCommands,
             player_deadzone: float = DEFAULT_DEADZONE,
             active_by_default: bool = True,
     ):
@@ -25,6 +27,7 @@ class LivePlaying(Callback):
         self.player_deadzone = player_deadzone
         self.active = active_by_default
         self.starting = False
+        self.commands = commands
 
         self.commands.activate.target = self.toggle
 
@@ -35,19 +38,22 @@ class LivePlaying(Callback):
     def toggle(self):
         self.active = not self.active
 
-    def _on_pre_step(self, actions: np.array):
+    def _on_pre_step(self, actions: Dict[AgentID, ActionType], *args, **kwargs):
         if self.active:
             act = copy.copy(actions)
-            act[0] = np.array(self.player.get_controls())
+            act['blue-0'] = np.array(self.player.get_controls())
             return act
-
         return actions
 
-    def _on_reset(self, obs: np.array, info: Dict[str, object], *args, **kwargs):
+    def _on_reset(self, obs: Dict[AgentID, ObsType], state: StateType, *args, **kwargs):
         pass
 
-    def _on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]],
-                 terminal: Union[List[bool], bool], info: Dict[str, object], *args, **kwargs):
+    def _on_step(self, obs: Dict[AgentID, ObsType],
+                 action: Dict[AgentID, ActionType],
+                 reward: Dict[AgentID, RewardType],
+                 truncated: Dict[AgentID, bool],
+                 terminated: Dict[AgentID, bool],
+                 state: StateType, *args, **kwargs):
         pass
 
     def _on_close(self, *args, **kwargs):

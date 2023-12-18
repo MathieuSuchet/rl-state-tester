@@ -1,18 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import List, Union, Dict, Iterable
+from typing import List, Dict
 
-import numpy as np
 from rlgym.api import AgentID, ActionType, RewardType, StateType, ObsType
 
-from rl_state_tester.utils.commands.commands import Command
+from rl_state_tester.utils.commands.commands import Command, MultiCallbackCommands
 
 
 class Callback(ABC):
-    def __init__(self, started_by_default: bool = False, commands: Iterable[Command] = None):
+    def __init__(self, started_by_default: bool = False, commands: Command = None):
         self._started = started_by_default
         self.commands = commands
-        if self.commands is None:
-            self.commands = []
 
 
     def start(self):
@@ -55,10 +52,10 @@ class Callback(ABC):
             self._on_close(args, kwargs)
 
     @abstractmethod
-    def _on_pre_step(self, actions: np.array, *args, **kwargs):
+    def _on_pre_step(self, actions: Dict[AgentID, ActionType], *args, **kwargs) -> Dict[AgentID, ActionType]:
         pass
 
-    def on_pre_step(self, actions: np.array, *args, **kwargs):
+    def on_pre_step(self, actions: Dict[AgentID, ActionType], *args, **kwargs) -> Dict[AgentID, ActionType]:
         return self._on_pre_step(actions, args, kwargs)
 
 
@@ -66,6 +63,15 @@ class MultiCallback(Callback):
     def __init__(self, callbacks: List[Callback], started_by_default: bool = True):
         super().__init__(started_by_default)
         self.callbacks = callbacks
+        self.commands = MultiCallbackCommands()
+
+        for callback in self.callbacks:
+            self.commands.append_commands(callback.commands)
+
+    def start(self):
+        for callback in self.callbacks:
+            callback.start()
+        super().start()
 
     def _on_reset(self, obs: Dict[AgentID, ObsType], state: StateType, *args, **kwargs):
         for callback in self.callbacks:
@@ -85,7 +91,7 @@ class MultiCallback(Callback):
         for callback in self.callbacks:
             callback.on_close(args, kwargs)
 
-    def _on_pre_step(self, actions: np.array, *args, **kwargs):
+    def _on_pre_step(self, actions: Dict[AgentID, ActionType], *args, **kwargs) -> Dict[AgentID, ActionType]:
         for callback in self.callbacks:
-            callback.on_pre_step(actions)
-
+            actions = callback.on_pre_step(actions)
+        return actions

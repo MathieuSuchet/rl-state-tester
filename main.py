@@ -2,9 +2,12 @@ from rlgym.rocket_league.reward_functions.goal_reward import GoalReward
 from rlgym.rocket_league.reward_functions.touch_reward import TouchReward
 from rlgym_ppo import Learner
 
+from rl_state_tester.global_harvesters.callbacks import MultiCallback
 from rl_state_tester.init import run
+from rl_state_tester.live_testing.live_player import LivePlaying
 from rl_state_tester.make import make
 from rl_state_tester.reward_state_replayer import RewardStateReplayer
+from rl_state_tester.utils.commands.commands import LivePlayingCommands
 from rl_state_tester.utils.rewards.common_rewards import SplitCombinedReward
 
 cb = SplitCombinedReward(
@@ -14,12 +17,15 @@ cb = SplitCombinedReward(
 
 
 def create_env():
-    return make(reward_fn=cb, renderer=None, harvester=RewardStateReplayer(rendered=False, combined_reward=cb))
+    return make(reward_fn=cb, renderer=None, harvester=MultiCallback(
+        callbacks=[
+            LivePlaying(LivePlayingCommands())
+        ]
+    ))
 
 
 if __name__ == "__main__":
 
-    env = create_env()
 
     agent = Learner(
         env_create_function=create_env,
@@ -41,4 +47,4 @@ if __name__ == "__main__":
         load_wandb=False,
     )
 
-    run(env, agent)
+    run(agent)
