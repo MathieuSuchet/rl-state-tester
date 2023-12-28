@@ -34,6 +34,7 @@ class LivePlaying(Callback):
     def start(self):
         super().start()
         self.player = PlayerAgent(self.player_deadzone)
+        self.player.start()
 
     def toggle(self):
         self.active = not self.active
@@ -41,7 +42,7 @@ class LivePlaying(Callback):
     def _on_pre_step(self, actions: Dict[AgentID, ActionType], *args, **kwargs):
         if self.active:
             act = copy.copy(actions)
-            act['blue-0'] = np.array(self.player.get_controls())
+            act['blue-0'] = np.array(self.player.get_controls()).reshape((1, 8))
             return act
         return actions
 
