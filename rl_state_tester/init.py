@@ -25,11 +25,10 @@ def run(env: RLGymV2GymWrapper, agent: PPOLearner, n_steps: int = -1, agent_tick
     current_actions = None
     while n_steps < 0 or t < n_steps:
         predicted_actions = agent.policy.get_action(obs)[0].detach().cpu().numpy()
-        # predicted_actions = predicted_actions.reshape((1, *predicted_actions.shape))
+        predicted_actions = predicted_actions.reshape((*predicted_actions.shape, 1))
         if t % agent_tick_skip == 0:
             current_actions = predicted_actions
-        print(current_actions)
-        obs, reward, truncated, terminal = env.step(current_actions)
+        obs, reward, truncated, terminal, info = env.step(current_actions)
 
         if truncated or terminal:
             obs = env.reset()

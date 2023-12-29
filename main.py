@@ -24,11 +24,12 @@ def create_env():
 
 
 if __name__ == "__main__":
+    env = create_env()
 
 
     agent = PPOLearner(
-        172,
-        8,
+        obs_space_size=env.rlgym_env.obs_builder.get_obs_space('blue-0'),
+        act_space_size=env.rlgym_env.action_parser.get_action_space('blue-0'),
         device="cpu",
         batch_size=100_000,
         mini_batch_size=10_000,
@@ -43,4 +44,4 @@ if __name__ == "__main__":
         ent_coef=0.005,
     )
 
-    run(create_env(), agent)
+    run(env, agent)
