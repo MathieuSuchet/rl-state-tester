@@ -4,12 +4,10 @@ from rlgym.rocket_league.reward_functions.touch_reward import TouchReward
 from rlgym_ppo.ppo import PPOLearner
 
 from rl_state_tester.global_harvesters.callbacks import MultiCallback
-from rl_state_tester.reward_state_replayer import RewardStateReplayer
-from rl_state_tester.ui.ui_handling import UIHandler
-from rl_state_tester.utils.rewards.common_rewards import SplitCombinedReward
 from rl_state_tester.init import run
 from rl_state_tester.live_testing.live_player import LivePlaying
 from rl_state_tester.make import make
+from rl_state_tester.ui.ui_handling import UIHandler
 from rl_state_tester.utils.commands.commands import LivePlayingCommands
 
 cb = CombinedReward(
@@ -18,7 +16,6 @@ cb = CombinedReward(
 )
 
 callbacks = [
-    RewardStateReplayer(rendered=False, combined_reward=cb),
     LivePlaying(LivePlayingCommands())
 ]
 
