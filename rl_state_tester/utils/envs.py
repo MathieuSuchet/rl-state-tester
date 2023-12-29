@@ -27,7 +27,7 @@ class HarvestableEnv(RLGym):
         return args
 
     def step(self, actions: Dict[AgentID, ActionType]) -> Tuple[
-        Dict[AgentID, ObsType], Dict[AgentID, RewardType], Dict[AgentID, bool], Dict[AgentID, bool]]:
+            Dict[AgentID, ObsType], Dict[AgentID, RewardType], Dict[AgentID, bool], Dict[AgentID, bool]]:
         obs, rewards, terminated, truncated = super().step(actions)
         self.harvester.on_step(obs, actions, rewards, terminated, truncated, self.state)
         return obs, rewards, terminated, truncated
