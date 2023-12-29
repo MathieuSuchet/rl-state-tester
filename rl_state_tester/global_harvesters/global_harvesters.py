@@ -7,13 +7,12 @@ from rl_state_tester.global_harvesters.callbacks import Callback
 
 
 class RewardHarvester(Callback):
-    def __init__(
-            self
-    ):
+    def __init__(self):
 
         # All episodes shape   : [n_episodes, ?, n_players, 1] (Can't treat all episodes at once on axis 0 and 2 ?)
         # Episode Reward shape : [n_steps_in_ep, n_players, 1]
         # Reward shape         : [n_players, 1]
+        super().__init__()
         self._all_rewards = []
         self._n_episodes = -2
 
@@ -42,9 +41,13 @@ class RewardHarvester(Callback):
     def _on_close(self, *args, **kwargs):
         pass
 
+    def _on_pre_step(self, actions: np.array, *args, **kwargs):
+        pass
+
 
 class StateHarvester(Callback):
     def __init__(self):
+        super().__init__()
         self._all_episodes = []
         self._nb_episodes = -2
 
@@ -76,9 +79,13 @@ class StateHarvester(Callback):
         self._nb_episodes += 1
         self._all_episodes.append([])
 
+    def _on_pre_step(self, actions: np.array, *args, **kwargs):
+        pass
+
 
 class ActionHarvester(Callback):
     def __init__(self):
+        super().__init__()
         self.actions = []
         self.n_episodes = -1
 
@@ -98,4 +105,7 @@ class ActionHarvester(Callback):
         return action
 
     def _on_close(self, *args, **kwargs):
+        pass
+
+    def _on_pre_step(self, actions: np.array, *args, **kwargs):
         pass
