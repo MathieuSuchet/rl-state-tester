@@ -2,6 +2,7 @@ import os
 from typing import Dict, Optional
 
 import keyboard
+import numpy as np
 from rlgym.api import AgentID, ObsType, StateType, ActionType, RewardType
 from rlviser_py import rlviser_py
 
@@ -12,14 +13,9 @@ from rl_state_tester.utils.rewards.common_rewards import SplitCombinedReward
 
 class RewardStateReplayer(Callback):
 
-    def __init__(
-            self,
-            rendered: bool,
-            combined_reward: SplitCombinedReward,
-            state_harvester: Optional[StateHarvester] = None,
-            reward_harvester: Optional[RewardHarvester] = None,
-
-    ):
+    def __init__(self, rendered: bool, combined_reward: SplitCombinedReward,
+                 state_harvester: Optional[StateHarvester] = None, reward_harvester: Optional[RewardHarvester] = None):
+        super().__init__()
         self.state_harvester = state_harvester
         self.reward_harvester = reward_harvester
         self.current_state_index = 0
@@ -73,6 +69,9 @@ class RewardStateReplayer(Callback):
 
         print("Waiting for shift...")
         keyboard.wait("shift")
+
+    def _on_pre_step(self, actions: np.array, *args, **kwargs):
+        pass
 
     def _print_rewards(self, state: StateType, rewards):
         for i, name in enumerate(state.cars.keys()):
