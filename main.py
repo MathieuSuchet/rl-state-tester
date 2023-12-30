@@ -19,13 +19,13 @@ callbacks = [
     LivePlaying(LivePlayingCommands())
 ]
 
+
 def create_env():
     return make(reward_fn=cb, renderer=None, harvester=MultiCallback(callbacks))
 
 
 if __name__ == "__main__":
     env = create_env()
-
 
     agent = PPOLearner(
         obs_space_size=env.rlgym_env.obs_builder.get_obs_space('blue-0'),
