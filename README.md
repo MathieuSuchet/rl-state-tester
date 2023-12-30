@@ -1,14 +1,26 @@
 # rl-state-tester
-A state tester using rlviser_py that helps you deal with reward tuning or state efficiency, it also works without rlviser, but you'll have a hard time debugging and it was mainly thought to work with it, i'll try to maintain it working without rlviser, maybe it'll break.
 
-**Code is still quite a mess, consider yourself warned**
+A testing project allowing you to do the following things :
 
-## Features
-- Multiple environment harvesters such as states or rewards that allows you to store a certain amount of these and study whatever you need to
-- Multiple state harvesters such as player position/velocity and ball position/velocity, allowing you to extract a given data in a state
-- Ability to go step by step on harvested states and rewards (forward and backward)
+- Play with your agent in its training environment
+- Log your reward at a given rate of steps
 
-You can create your own harvesters, it should work (i said "should").
+Currently working with rlgym-ppo / rlgym2 on master, sb3 / rlgym on "player-recording" branch, this branch also has some of the features listed below
 
-## How to use
-If you want to render the environment, you'll need [rlviser](https://github.com/VirxEC/rlviser), follow the readme in this project, and move the .exe file of both rlviser and umodel in the root folder along with the assets.path pointing to the right path
+## Incoming
+
+### Comfort
+
+- Hot reload on rewards and states, allowing you to change the rewards and states while the agent is playing (without restarting rocket league)
+
+### Features
+
+- Presets
+  - Clip a moment you liked and state set your bot on it
+  - Record yourself doing an action and replay it (a bit like TAS)
+ 
+## Authors
+CryyStall
+
+
+*to complete*
