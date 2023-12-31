@@ -7,6 +7,8 @@ A testing project allowing you to do the following things :
 
 Currently working with rlgym-ppo / rlgym2 on master, sb3 / rlgym on "player-recording" branch, this branch also has some of the features listed below
 
+This branch is currently working, but since rlgym2 doesn't support rocket league yet, you can't see what you do.
+
 ## Incoming
 
 ### Comfort
