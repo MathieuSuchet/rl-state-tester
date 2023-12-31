@@ -7,7 +7,6 @@ from rl_state_tester.global_harvesters.callbacks import MultiCallback
 from rl_state_tester.init import run
 from rl_state_tester.live_testing.live_player import LivePlaying
 from rl_state_tester.make import make
-from rl_state_tester.ui.ui_handling import UIHandler
 from rl_state_tester.utils.commands.commands import LivePlayingCommands
 
 cb = CombinedReward(
@@ -21,7 +20,7 @@ callbacks = [
 
 
 def create_env():
-    return make(reward_fn=cb, renderer=None, harvester=MultiCallback(callbacks))
+    return make(reward_fn=cb, renderer=None, callback=MultiCallback(callbacks))
 
 
 if __name__ == "__main__":
@@ -43,7 +42,6 @@ if __name__ == "__main__":
         clip_range=0.2,
         ent_coef=0.005,
     )
-    handler = UIHandler(callbacks)
-    handler.serve()
+
 
     run(env, agent)

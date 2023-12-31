@@ -6,6 +6,9 @@ from rlgym.rocket_league.reward_functions import CombinedReward
 
 
 class SplitCombinedReward(CombinedReward):
+    """
+    Reward that returns all its reward functions as a list rather than a float (don't use it in a normal context)
+    """
     def __init__(self, *rewards_and_weights: Union[RewardFunction, Tuple[RewardFunction, float]]):
         super().__init__(*rewards_and_weights)
 

@@ -16,29 +16,29 @@ class HarvestableEnv(RLGym):
                  truncation_cond: DoneCondition[AgentID, StateType],
                  transition_engine: TransitionEngine[AgentID, StateType, EngineActionType],
                  renderer: Optional[Renderer[StateType]],
-                 harvester: Callback):
+                 callback: Callback):
         super().__init__(state_mutator, obs_builder, action_parser, reward_fn, termination_cond, truncation_cond,
                          transition_engine, renderer)
-        self.harvester = harvester
+        self.callback = callback
 
     def reset(self) -> Dict[AgentID, ObsType]:
         args = super().reset()
-        self.harvester.on_reset(args, self.state)
+        self.callback.on_reset(args, self.state)
         return args
 
     def step(self, actions: Dict[AgentID, ActionType]) -> Tuple[
             Dict[AgentID, ObsType], Dict[AgentID, RewardType], Dict[AgentID, bool], Dict[AgentID, bool]]:
         engine_actions = self.action_parser.parse_actions(actions, self.state, self.shared_info)
-        engine_actions = self.harvester.on_pre_step(engine_actions)
+        engine_actions = self.callback.on_pre_step(engine_actions)
         new_state = self.transition_engine.step(engine_actions, self.shared_info)
         agents = self.agents
         obs = self.obs_builder.build_obs(agents, new_state, self.shared_info)
         is_terminated = self.termination_cond.is_done(agents, new_state, self.shared_info)
         is_truncated = self.truncation_cond.is_done(agents, new_state, self.shared_info)
         rewards = self.reward_fn.get_rewards(agents, new_state, is_terminated, is_truncated, self.shared_info)
-        self.harvester.on_step(obs, actions, rewards, is_terminated, is_truncated, self.state)
+        self.callback.on_step(obs, actions, rewards, is_terminated, is_truncated, self.state)
         return obs, rewards, is_terminated, is_truncated
 
     def close(self) -> None:
         super().close()
-        self.harvester.on_close()
+        self.callback.on_close()

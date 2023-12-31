@@ -25,21 +25,34 @@ def make(
                                                                                      orange_size=3), KickoffMutator()),
         transition_engine: TransitionEngine[AgentID, StateType, EngineActionType] = RocketSimEngine(),
         renderer: Optional[Renderer[StateType]] = RLViserRenderer(),
-        harvester: Optional[Callback] = None):
+        callback: Optional[Callback] = None):
+    """
+    Returns an environment using a callback
+    :param termination_cond: Termination conditions
+    :param truncation_cond: Truncation conditions
+    :param reward_fn: Reward function
+    :param obs_builder: Observation builder
+    :param action_parser: Action parser
+    :param state_setter: State setter
+    :param transition_engine: Transition engine (rocketsim / rocket league)
+    :param renderer: Renderer (RLViser or nothing)
+    :param callback: The callback to use
+    :return: 
+    """
     env = HarvestableEnv(
         obs_builder=obs_builder,
         action_parser=action_parser,
         state_mutator=state_setter,
         reward_fn=reward_fn,
         termination_cond=termination_cond,
-        harvester=harvester,
+        callback=callback,
         renderer=renderer,
         transition_engine=transition_engine,
         truncation_cond=truncation_cond,
     )
 
-    env.harvester.start()
+    env.callback.start()
 
-    Orchestrator(env.harvester.commands.commands)
+    Orchestrator(env.callback.commands.commands)
 
     return RLGymV2GymWrapper(env)

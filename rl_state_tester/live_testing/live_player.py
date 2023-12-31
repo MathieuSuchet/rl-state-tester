@@ -16,12 +16,20 @@ DEFAULT_COMMANDS = LivePlayingCommands(
 
 
 class LivePlaying(Callback):
+    """
+    Allows you to play as the agent 0
+    """
     def __init__(
             self,
             commands: LivePlayingCommands,
             player_deadzone: float = DEFAULT_DEADZONE,
             active_by_default: bool = True,
     ):
+        """
+        :param commands: Commands to use
+        :param player_deadzone: Player deadzone
+        :param active_by_default: True if you want to control the car by default, False otherwise (default is True)
+        """
         super().__init__()
         self.player = None
         self.player_deadzone = player_deadzone

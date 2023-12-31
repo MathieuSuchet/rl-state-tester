@@ -8,6 +8,9 @@ from rl_state_tester.utils.commands.commands_const import ACTIVATE_KEY
 class Hittable:
     @property
     def commands(self) -> List['Command']:
+        """
+        :return: All the commands of the group command as a list
+        """
         return []
 
 
@@ -46,17 +49,30 @@ class Command(Hittable):
         for c in self.blocked_commands:
             c.blocked = False
 
+
 class LivePlayingCommands(Hittable):
+    """
+    Commands used by the LivePlaying component
+    """
+
     def __init__(self, activate: Command = Command(ACTIVATE_KEY, -1)):
+        """
+        :param activate: Enable/Disable the component (if enabled, you control the car, else the agent controls)
+        """
         self.activate = activate
 
     @property
     def commands(self):
         return [self.activate]
 
+
 class MultiCallbackCommands(Hittable):
+    """
+    Commands used by the MultiCallback component
+    """
     def __init__(self):
         self._commands = []
+
     @property
     def commands(self) -> List['Command']:
         return self._commands
