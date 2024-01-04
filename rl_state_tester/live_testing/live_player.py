@@ -5,14 +5,10 @@ import numpy as np
 from rlgym.api import AgentID, ObsType, StateType, ActionType, RewardType
 
 from rl_state_tester.global_harvesters.callbacks import Callback
+from rl_state_tester.live_testing.controls import ControlType
+from rl_state_tester.live_testing.player_consts import DEFAULT_DEADZONE
 from rl_state_tester.live_testing.player_recorder import PlayerAgent
-from rl_state_tester.utils.commands.commands import LivePlayingCommands, Command
-from rl_state_tester.utils.commands.commands_const import ACTIVATE_KEY
-
-DEFAULT_DEADZONE = 0.2
-DEFAULT_COMMANDS = LivePlayingCommands(
-    activate=Command(ACTIVATE_KEY, -1)
-)
+from rl_state_tester.utils.commands.commands import LivePlayingCommands
 
 
 class LivePlaying(Callback):
@@ -22,6 +18,8 @@ class LivePlaying(Callback):
     def __init__(
             self,
             commands: LivePlayingCommands,
+            path_to_config: str,
+            device: ControlType = ControlType.KEYBOARD,
             player_deadzone: float = DEFAULT_DEADZONE,
             active_by_default: bool = True,
     ):
@@ -31,8 +29,9 @@ class LivePlaying(Callback):
         :param active_by_default: True if you want to control the car by default, False otherwise (default is True)
         """
         super().__init__()
-        self.player = None
         self.player_deadzone = player_deadzone
+        self.player = PlayerAgent(path_to_config, self.player_deadzone, device)
+
         self.active = active_by_default
         self.starting = False
         self.commands = commands
@@ -41,7 +40,6 @@ class LivePlaying(Callback):
 
     def start(self):
         super().start()
-        self.player = PlayerAgent(self.player_deadzone)
         self.player.start()
 
     def toggle(self):
