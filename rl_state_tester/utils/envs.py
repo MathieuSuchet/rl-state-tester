@@ -1,21 +1,21 @@
 import time
-from typing import Tuple, List, Union, Any, Dict, Type
+from typing import Union, List, Tuple, Any, Dict, Type
 
 import numpy as np
 from rlgym.communication import Message
-from rlgym.envs.match import Match as GymMatch
 from rlgym.gamelaunch import LaunchPreference
-from rlgym.gym import Gym as GymRL
-from rlgym.utils import StateSetter
-from rlgym.utils.gamestates import GameState
+from rlgym_sim.utils import StateSetter
+
+from rlgym.envs.match import Match as GymMatch
 from rlgym_sim.envs.match import Match as SimMatch
-from rlgym_sim.gym import Gym as GymSim
 
 from rl_state_tester.global_harvesters.callbacks import Callback, MultiCallback
 from rl_state_tester.presetting.clip_utils import Clip
 from rl_state_tester.utils.rewards.reward_logger import RewardLogger
 from rl_state_tester.utils.state_setters.common_setters import MultiSetter
 from states import StateResetResult
+from rlgym.gym import Gym as GymRL
+from rlgym_sim.gym import Gym as GymSim
 
 
 class HarvestableEnv(GymSim):

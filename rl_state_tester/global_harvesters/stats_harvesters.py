@@ -4,10 +4,8 @@ from typing import List, Union, Dict, NamedTuple, Optional, Type
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
-from rlgym_sim.gym import Gym
 from rlgym_sim.utils.common_values import BACK_WALL_Y, SIDE_WALL_X, CEILING_Z
 from rlgym_sim.utils.gamestates import GameState
-from stable_baselines3 import PPO
 
 from rl_state_tester.global_harvesters.callbacks import Callback
 from rl_state_tester.utils.rewards.common_rewards import RewardResult

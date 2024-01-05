@@ -1,6 +1,3 @@
-import time
-from threading import Thread
-
 import pygame.joystick
 
 JUMP = 0
@@ -27,15 +24,6 @@ class PlayerAgent:
         self.player_deadzone = player_deadzone
         self.last_jump = None
         self.started = False
-
-        # car_controls.throttle = controls[i * n + 1]
-        # car_controls.steer = controls[i * n + 2]
-        # car_controls.pitch = controls[i * n + 3]
-        # car_controls.yaw = controls[i * n + 4]
-        # car_controls.roll = controls[i * n + 5]
-        # car_controls.jump = controls[i * n + 6] == 1
-        # car_controls.boost = controls[i * n + 7] == 1
-        # car_controls.handbrake = controls[i * n + 8] == 1
 
     def _check_for_joystick(self):
         try:
@@ -93,8 +81,7 @@ class PlayerAgent:
         if roll_button or (jump and not self.last_jump):
             roll = steer
             yaw = 0
-            
+
         self.last_jump = jump
 
         return [throttle, steer, pitch, yaw, roll, jump, boost, handbrake]
-

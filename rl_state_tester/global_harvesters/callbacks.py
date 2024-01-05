@@ -1,16 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import List, Union, Dict, Tuple, Type, Optional
+from typing import List, Union, Dict, Optional, Type, Tuple
 
 import numpy as np
-from rlgym.utils.gamestates import GameState
-from rlgym.utils.state_setters import StateWrapper
 
-from rl_state_tester.utils.commands import Hittable
-from rl_state_tester.utils.rewards.common_rewards import RewardResult
+from rl_state_tester.utils.commands import Command, Hittable
 
 
 class Callback(ABC):
-
     def __init__(self, depends_on: Optional[List[Type]] = None, commands: Hittable = Hittable()):
         if not isinstance(depends_on, type(None)):
             # Remove duplicates
@@ -81,6 +77,11 @@ class MultiCallback(Callback):
     def __init__(self, callbacks: List[Callback]):
         super().__init__()
         self.callbacks = callbacks
+
+    def start(self):
+        for callback in self.callbacks:
+            callback.start()
+        super().start()
 
         self.start()
 
