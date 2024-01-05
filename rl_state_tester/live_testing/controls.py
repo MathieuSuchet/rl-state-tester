@@ -2,6 +2,7 @@ import sys
 from abc import ABC, abstractmethod
 from configparser import RawConfigParser, DuplicateSectionError, SectionProxy, MissingSectionHeaderError, \
     DuplicateOptionError
+from enum import Enum
 from typing import Optional
 
 import pygame
@@ -136,7 +137,7 @@ class ConfigParserMultiOpt(RawConfigParser):
         self._join_multiline_values()
 
 
-class ControlType:
+class ControlType(Enum):
     KEYBOARD: str = "kb"
     JOYSTICK: str = "joystick"
 
@@ -168,23 +169,20 @@ class ControlLoader:
 
     def load(self, path):
         parser = ConfigParserMultiOpt()
+
         parser.read(path)
 
         self.controls = []
 
-        for k in parser['Legacy ControlPreset_X']['gamepadbindings']:
-            attrs = k.strip()[1:-1].replace("\t","").split(",")
+        for k in parser['ProjectX.ControlPreset_X']['+gamepadbindings']:
+            attrs = k.strip()[1:-1].replace("\t", "").split(",")
             for i, attr in enumerate(attrs):
-                attrs[i] = attr.strip().replace("\"","").split("=")[1]
+                attrs[i] = attr.strip().replace("\"", "").split("=")[1]
             self.controls.append(Control(
                 action=attrs[0],
                 key=attrs[1] if len(attrs) > 1 else None,
                 axis_sign=attrs[2] if len(attrs) > 2 else None
             ))
-
-            print(self.controls[-1])
-
-
 
 
 class JoystickRecorder(ControlRecorder):
@@ -200,8 +198,11 @@ class JoystickRecorder(ControlRecorder):
         self._load_controls()
 
     def _load_controls(self):
-        loader = ControlLoader()
-        loader.load(self.path)
+        try:
+            loader = ControlLoader()
+            loader.load(self.path)
+        except Exception as e:
+            print(f"Encountered problem when loading the controls : {e}")
 
     def start(self):
         self.control = pygame.joystick.Joystick(0)

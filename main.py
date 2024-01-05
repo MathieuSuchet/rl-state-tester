@@ -48,7 +48,8 @@ if __name__ == "__main__":
     # run(env, agent, with_ui=True)
     LivePlaying(
         commands=LivePlayingCommands(),
-        path_to_config="TAInput.ini",
+        path_to_config="DefaultInput.ini",
         device=ControlType.JOYSTICK,
     )
+
 
