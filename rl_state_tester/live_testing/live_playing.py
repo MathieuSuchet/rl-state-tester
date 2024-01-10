@@ -36,6 +36,7 @@ class LivePlaying(Callback):
     def start(self):
         super().start()
         self.player = PlayerAgent(self.player_deadzone)
+        self.player.start()
 
     def toggle(self):
         self.active = not self.active

@@ -4,6 +4,7 @@ from typing import Union, List, Tuple, Any, Dict, Type
 import numpy as np
 from rlgym.communication import Message
 from rlgym.gamelaunch import LaunchPreference
+from rlgym.utils import TerminalCondition
 from rlgym_sim.utils import StateSetter
 
 from rlgym.envs.match import Match as GymMatch
@@ -13,7 +14,7 @@ from rl_state_tester.global_harvesters.callbacks import Callback, MultiCallback
 from rl_state_tester.presetting.clip_utils import Clip
 from rl_state_tester.utils.rewards.reward_logger import RewardLogger
 from rl_state_tester.utils.state_setters.common_setters import MultiSetter
-from states import StateResetResult
+from states.states import StateResetResult
 from rlgym.gym import Gym as GymRL
 from rlgym_sim.gym import Gym as GymSim
 
@@ -38,11 +39,11 @@ class HarvestableEnv(GymSim):
     def update_reward(self, reward):
         self._match._reward_fn = reward
         if isinstance(self.harvester, RewardLogger):
-            self.harvester.update_reward_legends([r.__class__.__name__ for r in reward.reward_functions])
+            self.harvester.update_reward(reward, [r.__class__.__name__ for r in reward.reward_functions])
         if isinstance(self.harvester, MultiCallback):
             for c in self.harvester.callbacks:
                 if isinstance(c, RewardLogger):
-                    c.update_reward_legends([r.__class__.__name__ for r in reward.reward_functions])
+                    c.update_reward(reward, [r.__class__.__name__ for r in reward.reward_functions])
 
     def update_state(self, setter: StateSetter):
         self._match._state_setter = setter
@@ -71,7 +72,7 @@ class HarvestableEnv(GymSim):
         }
         self.harvester.on_reset(obs, info)
 
-        if error_result:
+        if error_result and error_result.error:
             print("Error on state setting:", error_result.error)
 
         if return_info:
@@ -131,6 +132,9 @@ class HarvestableEnv(GymSim):
         self._is_multi_setter(match_setter)
         match_setter.go_to(state_type, count)
 
+    def update_terminal_cond(self, terminal_conditions: List[TerminalCondition]):
+        self._match._terminal_conditions = terminal_conditions
+
     def add_clip(self, clip: Clip):
         match_setter = self._match.get_setter()
         self._is_multi_setter(match_setter)
@@ -185,12 +189,32 @@ class HarvestableEnvRL(GymRL):
         }
         self.harvester.on_reset(obs, info)
 
-        if error_result:
+        if error_result and error_result.error:
             print("Error on state setting:", error_result.error)
 
         if return_info:
             return obs, info
         return obs
+
+    def update_state(self, setter: StateSetter):
+        self._match._state_setter = setter
+
+    def update_reward(self, reward):
+        self._match._reward_fn = reward
+        if isinstance(self.harvester, RewardLogger):
+            self.harvester.update_reward(reward, [r.__class__.__name__ for r in reward.reward_functions])
+        if isinstance(self.harvester, MultiCallback):
+            for c in self.harvester.callbacks:
+                if isinstance(c, RewardLogger):
+                    c.update_reward(reward, [r.__class__.__name__ for r in reward.reward_functions])
+
+    def update_ss_setter(self, state_type: Type[StateSetter], count: int = 0):
+        match_setter = self._match.get_setter()
+        self._is_multi_setter(match_setter)
+        match_setter.go_to(state_type, count)
+
+    def update_terminal_cond(self, terminal_conditions: List[TerminalCondition]):
+        self._match._terminal_conditions = terminal_conditions
 
     def step(self, actions: Any) -> Tuple[List, List, bool, Dict]:
         """
@@ -238,11 +262,6 @@ class HarvestableEnvRL(GymRL):
     def _is_multi_setter(self, match_setter: StateSetter):
         if not isinstance(match_setter, MultiSetter):
             raise Exception(f"Cannot use setter picking on setter {match_setter.__class__.__name__}")
-
-    def update_ss_setter(self, state_type: Type[StateSetter], count: int = 0):
-        match_setter = self._match.get_setter()
-        self._is_multi_setter(match_setter)
-        match_setter.go_to(state_type, count)
 
     def add_clip(self, clip: Clip):
         match_setter = self._match.get_setter()

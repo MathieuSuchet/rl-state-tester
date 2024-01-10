@@ -30,9 +30,9 @@ def run(env: HarvestableEnv, agent: PPO, callbacks, n_steps: int = -1, agent_tic
         if hasattr(h, "commands"):
             all_commands.extend(h.commands.commands)
 
-    # Orchestrator(
-    #     commands=all_commands
-    # )
+    Orchestrator(
+        commands=all_commands
+    )
 
 
     while n_steps < 0 or t < n_steps:

@@ -10,7 +10,7 @@ from rl_state_tester.global_harvesters.callbacks import Callback
 
 class HotReloadConfig:
 
-    def __init__(self, script_path: str, config_path: str, action: Callable, script_module: ModuleType, config_module: ModuleType):
+    def __init__(self, script_path: Optional[str], config_path: str, action: Callable, script_module: Optional[ModuleType], config_module: ModuleType):
         self.script_path = script_path
         self.config_path = config_path
         self.action = action
@@ -22,7 +22,7 @@ class HotReloadConfig:
         )
 
     def update(self):
-        script_st_mtime = os.stat(self.script_path).st_mtime
+        script_st_mtime = os.stat(self.script_path).st_mtime if self.script_path else 0
         config_st_mtime = os.stat(self.config_path).st_mtime
 
         updated = self.last_modified[0] != script_st_mtime or self.last_modified[1] != config_st_mtime
@@ -33,7 +33,8 @@ class HotReloadConfig:
         return updated
 
     def reload(self):
-        importlib.reload(self.script_module)
+        if self.script_module:
+            importlib.reload(self.script_module)
         importlib.reload(self.config_module)
 
 
