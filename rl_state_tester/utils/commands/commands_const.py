@@ -1,1 +1,0 @@
-ACTIVATE_KEY = 'a'

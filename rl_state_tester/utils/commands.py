@@ -11,6 +11,19 @@ class Hittable:
     def commands(self) -> List['Command']:
         return []
 
+    def get_command(self, command: str):
+
+        if hasattr(self, command):
+            return self.__dict__[command]
+        else:
+            final_cmd = None
+            for attr in self.__dict__.values():
+                if issubclass(attr.__class__, Hittable):
+                    final_cmd = attr.get_command(command)
+                    if final_cmd:
+                        break
+            return final_cmd
+
 
 class Command:
     def __init__(self, value: str, priority: int, target: Callable = lambda: None,
@@ -80,6 +93,18 @@ class ClipRecorderCommands(Hittable):
     @property
     def commands(self):
         return [self.toggle_recording]
+
+
+class MultiCallbackCommands(Hittable):
+    def __init__(self):
+        self._commands = []
+
+    @property
+    def commands(self) -> List['Command']:
+        return self._commands
+
+    def append_commands(self, command: Hittable):
+        self._commands.extend(command.commands)
 
 
 class ClipManagerCommands(Hittable):

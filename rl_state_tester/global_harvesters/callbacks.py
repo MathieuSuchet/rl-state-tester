@@ -3,7 +3,8 @@ from typing import List, Union, Dict, Optional, Type, Tuple
 
 import numpy as np
 
-from rl_state_tester.utils.commands import Command, Hittable
+from rl_state_tester.utils.commands import Hittable
+from rl_state_tester.utils.rewards.common_rewards import RewardResult
 
 
 class Callback(ABC):
@@ -72,6 +73,12 @@ class Callback(ABC):
     def _on_pre_reset(self):
         pass
 
+    def to_json(self):
+        return {
+            'id': id(self),
+            'name': self.__class__.__name__
+        }
+
 
 class MultiCallback(Callback):
     def __init__(self, callbacks: List[Callback]):
@@ -82,8 +89,6 @@ class MultiCallback(Callback):
         for callback in self.callbacks:
             callback.start()
         super().start()
-
-        self.start()
 
     def _on_post_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]],
                       terminal: Union[List[bool], bool],

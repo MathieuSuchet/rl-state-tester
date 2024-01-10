@@ -1,15 +1,15 @@
-SAVE_KEY = 's'
+SAVE_KEY = 'p'
 LOAD_KEY = 'l'
 UNLOAD_KEY = 'u'
 
-CLIP_KEY = 'k'
-PLAY_CLIP_KEY = 'p'
-STOP_CLIP_KEY = 'd'
+CLIP_KEY = '4'
+PLAY_CLIP_KEY = '3'
+STOP_CLIP_KEY = '2'
 
-PAUSE_KEY = 'm'
-RESET_KEY = 'r'
-CLOSE_KEY = 'c'
+PAUSE_KEY = '7'
+RESET_KEY = '8'
+CLOSE_KEY = '9'
 
-ACTIVATE_KEY = 'a'
+ACTIVATE_KEY = '1'
 
 RECORD_KEY = 'v'

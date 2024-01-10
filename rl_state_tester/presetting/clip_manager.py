@@ -139,3 +139,10 @@ class ClipManager(Callback):
         self.clipper.on_close(args, kwargs)
         self.replayer.on_close(args, kwargs)
         self.recorder.on_close(args, kwargs)
+
+    def to_json(self):
+        return {
+            'clipper': self.clipper.to_json(),
+            'replayer': self.replayer.to_json(),
+            'recorder': self.replayer.to_json()
+        }

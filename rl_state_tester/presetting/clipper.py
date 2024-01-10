@@ -3,7 +3,7 @@ from typing import List, Union, Dict, Optional, Type
 import numpy as np
 
 from rl_state_tester.global_harvesters.callbacks import Callback
-from rl_state_tester.presetting.clip_utils import Clip, save_clips, DEFAULT_STEPS_SAVED, DEFAULT_CLIP_PATH, \
+from rl_state_tester.presetting.clip_utils import DEFAULT_STEPS_SAVED, DEFAULT_CLIP_PATH, \
     DEFAULT_CLIP_LEGEND_PATH, register_clips
 from rl_state_tester.utils.commands import StateActionClipperCommands
 

@@ -92,7 +92,6 @@ class HarvestableEnv(GymSim):
         while self.pause:
             time.sleep(.3)
 
-
         actions = self._match.format_actions(self._match.parse_actions(actions, self._prev_state))
         new_actions = self.harvester.on_pre_step(actions)
 
@@ -207,7 +206,6 @@ class HarvestableEnvRL(GymRL):
         actions = self._match.parse_actions(actions, self._prev_state)
         actions_sent = self._send_actions(actions)
 
-
         received_state = self._receive_state()
 
         # If, for any reason, the state is not successfully received, we do not want to just crash the API.
@@ -251,7 +249,6 @@ class HarvestableEnvRL(GymRL):
         self._is_multi_setter(match_setter)
         match_setter.add_clip(clip)
 
-
     def _send_actions(self, actions):
         assert isinstance(actions, np.ndarray), "Invalid action type, action must be of type np.ndarray(n, 8)."
         assert len(actions.shape) == 2, "Invalid action shape, shape must be of the form (n, 8)."
@@ -287,6 +284,7 @@ class VerifiedSimMatch(SimMatch):
 class VerifiedGymMatch(GymMatch):
     def get_setter(self):
         return self._state_setter
+
     def get_reset_state(self) -> Tuple[list, StateResetResult]:
         new_state = self._state_setter.build_wrapper(self._team_size, self._spawn_opponents)
         result = self._state_setter.reset(new_state)

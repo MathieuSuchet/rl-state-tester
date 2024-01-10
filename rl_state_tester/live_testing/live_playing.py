@@ -1,4 +1,5 @@
 import copy
+import json.tool
 import time
 from threading import Thread
 from typing import List, Union, Dict, Optional, Type
@@ -29,7 +30,6 @@ class LivePlaying(Callback):
         self.player = None
         self.player_deadzone = player_deadzone
         self.active = active_by_default
-        self.starting = False
 
         self.commands.activate.target = self.toggle
 
@@ -57,3 +57,10 @@ class LivePlaying(Callback):
 
     def _on_close(self, *args, **kwargs):
         pass
+
+    def to_json(self):
+        base = super().to_json()
+        base.update({
+            'active': self.active
+        })
+        return base

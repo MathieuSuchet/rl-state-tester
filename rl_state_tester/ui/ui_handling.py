@@ -1,12 +1,13 @@
-import re
 from threading import Thread
 from typing import List
 
-from flask import Flask
+from flask import Flask, request
 from flask_cors import CORS
 from gevent.pywsgi import WSGIServer
 
 from rl_state_tester.global_harvesters.callbacks import Callback
+from rl_state_tester.ui.encoders import JSONCallbackInfoEncoder
+from rl_state_tester.utils.commands import Hittable
 
 app = Flask("State tester")
 CORS(app)
@@ -20,31 +21,43 @@ class UIHandler:
         self.http_server = None
         self.running = True
         self.ui_thread = Thread(target=self._start)
-
-        def __return_callback(callback: Callback):
-            class_name = callback.__class__.__name__
-            split_name = re.findall('[A-Z0-9][^A-Z0-9]*', class_name)
-            class_name = ""
-            path = ""
-
-            for elt in split_name:
-                class_name += elt + " "
-                path += elt.lower() + "-"
-            class_name = class_name[:-1]
-            path = path[:-1]
-
-            return {
-                'name': class_name,
-                'path': path
-            }
+        self.callback_info_encoder = JSONCallbackInfoEncoder()
+        self.formatted_cbs = [self.callback_info_encoder.default(callback) for callback in self.callbacks]
 
         @self.app.get("/callbacks")
         def get_callbacks():
-            callbacks = {'data': []}
-            for c in self.callbacks:
-                callbacks['data'].append(__return_callback(c))
-            return callbacks
+            return {'data': self.formatted_cbs}
 
+        @self.app.post("/callbacks")
+        def activate_command():
+            body = request.json
+
+            def __find_command(c, name):
+                command = None
+                if not hasattr(c, name):
+                    for k, v in c.__dict__.items():
+                        if issubclass(v.__class__, Hittable):
+                            command = v.get_command(name)
+                            if command:
+                                break
+                        else:
+                            if hasattr(v, name):
+                                command = getattr(v, name)
+                else:
+                    command = getattr(c, name)
+                return command
+
+            found_callback = None
+
+            for c in self.callbacks:
+                if id(c) == body['id']:
+                    if body['name'] == "get_cb_data":
+                        return {'data': c.to_json()}
+                    __find_command(c.commands, body['name']).target()
+                    found_callback = c
+                    break
+
+            return {'data': found_callback.to_json()}
 
     def _start(self):
         self.http_server = WSGIServer(("localhost", 5000), app)

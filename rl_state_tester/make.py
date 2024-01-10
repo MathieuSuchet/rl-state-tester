@@ -36,6 +36,8 @@ def make_sim(tick_skip: int = 8,
         team_size=team_size
     )
 
+    harvester.start()
+
     return HarvestableEnv(
         match=match,
         agent_tick_skip=tick_skip,
@@ -75,6 +77,8 @@ def make_rl(
         spawn_opponents=spawn_opponents,
         team_size=team_size
     )
+
+    harvester.start()
 
     return HarvestableEnvRL(
         match=match,
