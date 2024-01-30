@@ -1,9 +1,11 @@
 import time
 from threading import Thread
-from typing import List, NamedTuple, Type
+from typing import List, NamedTuple, Type, Union
 import re
 
 from rlgym.gym import Gym
+from rlgym_ppo.ppo import PPOLearner
+from stable_baselines3 import PPO
 
 from rl_state_tester.global_harvesters.callbacks import Callback
 from rl_state_tester.utils.commands import Command
@@ -26,19 +28,17 @@ class Orchestrator:
     def _detection_thread_activity(self):
         commands: List[Command] = self.sorted_commands
 
-        try:
-            while self.running:
-                for c in commands:
-                    if c.is_pressed():
-                        c.target()
-                time.sleep(self.command_detection_time)
-        except Exception as e:
-            print("Error on command detection thread:", e)
+        while self.running:
+            for c in commands:
+                if c.is_pressed():
+                    c.target()
+            time.sleep(self.command_detection_time)
 
 
 class Observer:
-    def __init__(self, env: HarvestableEnv):
+    def __init__(self, env: HarvestableEnv, agent: Union[PPO, PPOLearner]):
         self.env = env
+        self.agent = agent
         self.value = ''
 
     def update(self, value, *args):
@@ -53,6 +53,12 @@ class Observer:
             self.env.update_ss_setter(*args)
         if self.value == 'add_clip':
             self.env.add_clip(*args)
+        if self.value == 'get_env':
+            return self.env
+        if self.value == "get_agent":
+            return self.agent
+        if self.value == "get_rewards":
+            return self.env._match._reward_fn
 
         self.value = ''
 
@@ -91,7 +97,6 @@ class Distributor:
 
         return None
 
-
     def __verify_internal_dep(self, obj):
         for attr in obj.__dict__.values():
             if issubclass(type(attr), Callback):
@@ -103,8 +108,6 @@ class Distributor:
             for d in deps:
                 if self._contains_element_of_type(d):
                     setattr(obj, Distributor.camel_to_snake(d.__name__), self._get_element_of_type(d))
-
-
 
     def _distribute_dependencies(self):
         for harvester in self.harvesters:

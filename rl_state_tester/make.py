@@ -12,7 +12,8 @@ from rl_state_tester.global_harvesters.callbacks import Callback
 from rl_state_tester.utils.envs import HarvestableEnv, HarvestableEnvRL, VerifiedSimMatch, VerifiedGymMatch
 
 
-def make_sim(tick_skip: int = 8,
+def make_sim(tick_skip: int = 1,
+             agent_tick_skip: int = 8,
              spawn_opponents: bool = False,
              team_size: int = 1,
              gravity: float = 1,
@@ -33,7 +34,7 @@ def make_sim(tick_skip: int = 8,
         reward_function=reward_fn,
         terminal_conditions=terminal_conditions,
         spawn_opponents=spawn_opponents,
-        team_size=team_size
+        team_size=team_size,
     )
 
     harvester.start()

@@ -3,7 +3,8 @@ from typing import NamedTuple, Callable, List, Optional
 import keyboard
 
 from rl_state_tester.utils.commands_const import CLIP_KEY, PLAY_CLIP_KEY, LOAD_KEY, SAVE_KEY, \
-    CLOSE_KEY, RESET_KEY, UNLOAD_KEY, ACTIVATE_KEY, PAUSE_KEY, STOP_CLIP_KEY, RECORD_KEY
+    CLOSE_KEY, RESET_KEY, UNLOAD_KEY, ACTIVATE_KEY, PAUSE_KEY, STOP_CLIP_KEY, RECORD_KEY, ROLLOUT_START_KEY, \
+    ROLLOUT_END_KEY
 
 
 class Hittable:
@@ -151,3 +152,13 @@ class LivePlayingCommands(Hittable):
     @property
     def commands(self):
         return [self.activate]
+
+
+class RolloutCommands(Hittable):
+    def __init__(self, start: Command = Command(ROLLOUT_START_KEY, -1), stop: Command = Command(ROLLOUT_END_KEY, -1)):
+        self.start = start
+        self.stop = stop
+
+    @property
+    def commands(self) -> List['Command']:
+        return [self.start, self.stop]

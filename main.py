@@ -1,8 +1,12 @@
+import os.path
 from typing import Iterable
 
 from rlgym.gamelaunch import LaunchPreference
 from rlgym.utils import TerminalCondition as GymTerminalCondition
+from rlgym_ppo import Learner
+from rlgym_ppo.ppo import PPOLearner
 from rlgym_sim.utils import TerminalCondition as SimTerminalCondition
+from rlgym_tools.extra_obs.advanced_padder import AdvancedObsPadder
 from stable_baselines3.ppo import PPO
 
 import rewards.rewards
@@ -16,6 +20,7 @@ from rl_state_tester.hot_reload.hot_reload import HotReload, HotReloadConfig
 from rl_state_tester.init import run
 from rl_state_tester.live_testing.live_playing import LivePlaying
 from rl_state_tester.make import make_rl, make_sim
+from rl_state_tester.rollout_stats.rollout_callback import Rollout
 from rl_state_tester.utils.commands import LivePlayingCommands
 from rl_state_tester.utils.rewards.reward_logger import RewardLogger
 from rl_state_tester.utils.state_setters.common_setters import MultiSetter, ClipSetter
@@ -63,9 +68,9 @@ callbacks = [
     ),
 
     # Log rewards every %print_frequency% steps
-    RewardLogger(
-        reward_function=reward_config.reward_function,
-        print_frequency=100),
+    # RewardLogger(
+    #     reward_function=reward_config.reward_function,
+    #     print_frequency=100),
 
     # Hot reload of rewards and states
     HotReload(targets=(
@@ -91,6 +96,7 @@ callbacks = [
             config_module=terminal_conditions_config
         )
     )),
+    Rollout(),
     #ClipManager(
     #    clip_path='clips',
     #    legend_clip_path='clips_legend.txt',
@@ -101,6 +107,7 @@ callbacks = [
 
 env = make_sim(
     tick_skip=1,
+    agent_tick_skip=8,
     # launch_preference=LaunchPreference.STEAM,
     reward_fn=rewards.reward_config.reward_function,
     state_setter=MultiSetter(
@@ -109,16 +116,33 @@ env = make_sim(
             clip_setter
         ]
     ),
-    team_size=2,
-    obs_builder=AstraObs(),
+    team_size=1,
+    obs_builder=AdvancedObsPadder(),
     action_parser=ArtemisParser(),
-    spawn_opponents=True,
+    spawn_opponents=False,
     terminal_conditions=terminal_conditions_config.terminal_conditions,
     harvester=MultiCallback(callbacks=callbacks)
 )
 
 
 if __name__ == "__main__":
-    agent = PPO.load("exit_save.zip", env)
+    # agent = PPO.load("exit_save.zip", env)
+    agent = PPOLearner(
+        device="cpu",
+        act_space_size=env.action_space.n,
+        obs_space_size=env.observation_space.shape[0],
+        batch_size=100_000,
+        clip_range=None,
+        policy_type=0,
+        continuous_var_range=None,
+        critic_lr=1e-5,
+        policy_lr=1e-5,
+        policy_layer_sizes=(256, 256, 256),
+        critic_layer_sizes=(256, 256, 256),
+        n_epochs=10,
+        ent_coef=.1,
+        mini_batch_size=10_000,
+    )
+
     # agent = convert_model_to_gym("exit_save.zip", env, "cpu")
     run(env, agent, callbacks, with_ui=False)
