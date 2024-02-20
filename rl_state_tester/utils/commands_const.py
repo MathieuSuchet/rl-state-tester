@@ -8,7 +8,6 @@ STOP_CLIP_KEY = '2'
 
 PAUSE_KEY = '7'
 RESET_KEY = '8'
-CLOSE_KEY = '9'
 
 ACTIVATE_KEY = '1'
 

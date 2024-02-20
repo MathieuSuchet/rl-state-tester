@@ -2,8 +2,7 @@ from typing import NamedTuple, Callable, List, Optional
 
 import keyboard
 
-from rl_state_tester.utils.commands_const import CLIP_KEY, PLAY_CLIP_KEY, LOAD_KEY, SAVE_KEY, \
-    CLOSE_KEY, RESET_KEY, UNLOAD_KEY, ACTIVATE_KEY, PAUSE_KEY, STOP_CLIP_KEY, RECORD_KEY
+from rl_state_tester.utils.commands_const import CLIP_KEY, PLAY_CLIP_KEY, LOAD_KEY, SAVE_KEY, RESET_KEY, UNLOAD_KEY, ACTIVATE_KEY, PAUSE_KEY, STOP_CLIP_KEY, RECORD_KEY
 
 
 class Hittable:
@@ -112,12 +111,14 @@ class ClipManagerCommands(Hittable):
             self,
             clipper_commands: StateActionClipperCommands = StateActionClipperCommands(),
             replayer_commands: StateActionReplayerCommands = StateActionReplayerCommands(),
+            recorder_commands: ClipRecorderCommands = ClipRecorderCommands(),
             unload_clips: Command = Command(UNLOAD_KEY, -1),
             load_clips: Command = Command(LOAD_KEY, -1),
             save_clips: Command = Command(SAVE_KEY, -1)
     ):
         self.clipper_commands = clipper_commands
         self.replayer_commands = replayer_commands
+        self.recorder_commands = recorder_commands
         self.unload_clips = unload_clips
         self.load_clips = load_clips
         self.save_clips = save_clips
@@ -125,23 +126,21 @@ class ClipManagerCommands(Hittable):
     @property
     def commands(self):
         return [self.unload_clips, self.load_clips,
-                self.save_clips]
+                self.save_clips, *self.clipper_commands.commands, *self.replayer_commands.commands, *self.recorder_commands.commands]
 
 
 class ForceCommands(Hittable):
     def __init__(
             self,
             reset: Command = Command(RESET_KEY, -1),
-            close: Command = Command(CLOSE_KEY, -1),
             pause: Command = Command(PAUSE_KEY, -1)
     ):
         self.reset = reset
-        self.close = close
         self.pause = pause
 
     @property
     def commands(self):
-        return [self.reset, self.close, self.pause]
+        return [self.reset, self.pause]
 
 
 class LivePlayingCommands(Hittable):

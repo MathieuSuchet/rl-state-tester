@@ -20,10 +20,10 @@ def run(env: HarvestableEnv, agent: PPO, callbacks, n_steps: int = -1, agent_tic
         handler.serve()
 
         # Dependency injection I guess ?
-    distrib = Distributor(callbacks, others)
+    distrib = Distributor(np.array(callbacks).copy().tolist(), others)
 
     all_commands = []
-    for h in distrib.harvesters:
+    for h in callbacks:
         all_commands.extend(h.commands.commands)
 
     for h in distrib.others:
@@ -33,7 +33,6 @@ def run(env: HarvestableEnv, agent: PPO, callbacks, n_steps: int = -1, agent_tic
     Orchestrator(
         commands=all_commands
     )
-
 
     while n_steps < 0 or t < n_steps:
         obs = np.array(obs)

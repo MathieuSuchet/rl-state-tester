@@ -34,6 +34,9 @@ class MultiSetter(StateSetter):
             self.last_setter = self.current_setter
             self.current_setter = found_setter
 
+    def build_wrapper(self, max_team_size: int, spawn_opponents: bool) -> StateWrapper:
+        return self.current_setter.build_wrapper(max_team_size, spawn_opponents)
+
 
     def reset(self, state_wrapper: StateWrapper):
         wrapper = self.current_setter.reset(state_wrapper)

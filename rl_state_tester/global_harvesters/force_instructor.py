@@ -1,9 +1,7 @@
 import time
-from threading import Thread
-from typing import NamedTuple, List, Union, Dict, Tuple, Optional, Type
+from typing import List, Union, Dict, Tuple, Optional, Type
 
 import numpy as np
-from gym import Env
 
 from rl_state_tester.global_harvesters.callbacks import Callback
 from rl_state_tester.utils.commands import ForceCommands
@@ -27,11 +25,9 @@ class ForceInstructor(Callback):
         self.running = True
 
         self.asking_for_reset = False
-        self.asking_for_close = False
         self.asking_for_pause = False
 
         self.commands.reset.target = self.force_reset
-        self.commands.close.target = self.force_close
         self.commands.pause.target = self.force_pause
 
     def _on_reset(self, obs: np.array, info: Dict[str, object], *args, **kwargs):
@@ -39,9 +35,6 @@ class ForceInstructor(Callback):
 
     def _on_step(self, obs: np.array, action: np.array, reward: List[Union[float, int]],
                  terminal: Union[List[bool], bool], info: Dict[str, object], *args, **kwargs):
-        if self.asking_for_close:
-            self.asking_for_close = False
-            self.observer.update('close')
         if self.asking_for_pause:
             # we wait
             while self.asking_for_pause:
@@ -61,9 +54,6 @@ class ForceInstructor(Callback):
 
     def force_reset(self):
         self.asking_for_reset = True
-
-    def force_close(self):
-        self.asking_for_close = True
 
     def force_pause(self):
         print(f"{'Pausing' if not self.asking_for_pause else 'Unpausing'}")

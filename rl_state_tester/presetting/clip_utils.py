@@ -1,3 +1,4 @@
+import datetime
 import pickle
 from typing import NamedTuple, Sequence, List
 
@@ -16,7 +17,7 @@ class Clip(NamedTuple):
 
 
 def register_clips(clips: List[Clip], state, actions, clip_file_path, legend_clip_file_path):
-    name = str(input("Clip saved. Give it a name: "))
+    name = "Clip_" + datetime.datetime.now().strftime("%Y%d%m%H%M%S%f")
     clips.append(Clip(
         starting_state=state,
         actions=actions,

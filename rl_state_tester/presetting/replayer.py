@@ -1,4 +1,5 @@
 import os
+import time
 from typing import List, Union, Dict, Tuple, Optional, Type
 
 import numpy as np
@@ -35,13 +36,18 @@ class StateActionReplayer(Callback):
         self.active = False
         self.count = 0
         self.current_clip: Optional[Clip] = None
+        self.focus = True
 
         self.commands.play_clip.target = self.activate_replaying
 
     def activate_replaying(self):
         if self._started:
+            self.focus = True
             self.going_to_replay = True
             self.active = True
+
+            while self.focus:
+                time.sleep(.1)
 
     def _on_pre_reset(self):
         if len(self.clips) == 0 and self.active:
@@ -55,12 +61,15 @@ class StateActionReplayer(Callback):
                 while clip_choice < -1 or clip_choice >= len(self.clips):
                     clip_choice = int(input(f"Clip number {clip_choice} doesn't exist, pick another one (-1 to cancel): "))
                     if clip_choice == -1:
+                        self.active = False
+                        self.current_clip = None
                         return
 
                 self.current_clip = self.clips[clip_choice]
                 print("Replaying...")
                 self.observer.update('change_ss_setter', ClipSetter)
                 self.observer.update('add_clip', self.current_clip)
+                self.focus = False
             except Exception as e:
                 print("Error when choosing the clip to replay:", e)
 
@@ -92,7 +101,7 @@ class StateActionReplayer(Callback):
             if self.count == len(self.current_clip.actions) - 1:
                 print("End of clip")
                 self.active = False
-                self.force_instructor.force_pause()
+                # self.force_instructor.force_pause()
                 self.commands.play_clip.unblock_all()
                 self.current_clip = None
                 self.count = 0

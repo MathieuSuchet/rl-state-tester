@@ -5,6 +5,7 @@ import numpy as np
 from rlgym.communication import Message
 from rlgym.gamelaunch import LaunchPreference
 from rlgym.utils import TerminalCondition
+from rlgym.utils.gamestates import GameState
 from rlgym_sim.utils import StateSetter
 
 from rlgym.envs.match import Match as GymMatch
